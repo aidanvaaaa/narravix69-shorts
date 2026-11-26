@@ -39,7 +39,7 @@ def render_video(plan, words, duration, out_mp4, seed=0, progress=print, workdir
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(joined)], check=True)
     tmp = pathlib.Path(str(out_mp4) + ".tmp.mp4")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(joined), "-vf", "scale=1080:1920:flags=lanczos",
-                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-r", "30",
                     str(tmp)], check=True)
     tmp.rename(out_mp4)
 
