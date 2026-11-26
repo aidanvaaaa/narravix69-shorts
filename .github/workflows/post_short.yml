@@ -39,7 +39,7 @@ jobs:
 
       - name: System packages and caption font
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg espeak-ng
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg espeak-ng mesa-vulkan-drivers libvulkan1
           mkdir -p assets
           [ -f assets/ComicRelief-Bold.ttf ] || curl -sSL -o assets/ComicRelief-Bold.ttf https://github.com/google/fonts/raw/main/ofl/comicrelief/ComicRelief-Bold.ttf
 
@@ -55,7 +55,7 @@ jobs:
 
       - name: 3D renderer (headless Chromium) and fonts
         run: |
-          cd engine3d && npm init -y >/dev/null && npm install --silent playwright@1.49 && npx playwright install --with-deps chromium && cd ..
+          cd engine3d && npm init -y >/dev/null && npm install --silent playwright@1.63 && npx playwright install --with-deps chromium && cd ..
           F=$HOME/fonts; mkdir -p $F/anton $F/cardo
           G=https://github.com/google/fonts/raw/main/ofl
           curl -sSL -o $F/anton/Anton-Regular.ttf $G/anton/Anton-Regular.ttf
