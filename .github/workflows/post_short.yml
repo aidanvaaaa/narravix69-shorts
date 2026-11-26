@@ -1,0 +1,96 @@
+name: Post a short
+
+on:
+  schedule:
+    # UTC times = about 8:17am, 12:17pm, 4:17pm, 7:17pm Pacific (winter time)
+    - cron: "17 16 * * *"
+    - cron: "17 20 * * *"
+    - cron: "17 0 * * *"
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Make the video but don't post it"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: post-short
+  cancel-in-progress: false
+
+jobs:
+  make-and-post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Random delay (so posts don't land at the exact same minute)
+        if: github.event_name == 'schedule'
+        run: sleep $(( RANDOM % 900 ))
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: System packages and caption font
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg espeak-ng
+          mkdir -p assets
+          [ -f assets/ComicRelief-Bold.ttf ] || curl -sSL -o assets/ComicRelief-Bold.ttf https://github.com/google/fonts/raw/main/ofl/comicrelief/ComicRelief-Bold.ttf
+
+      - name: Cache voice models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-kokoro-v1
+
+      - name: Python packages
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet -r requirements.txt
+
+      - name: Make (and post) one short
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          VOICE: ${{ vars.VOICE }}
+          POSTS_PER_DAY: ${{ vars.POSTS_PER_DAY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          NOTIFY_WEBHOOK: ${{ secrets.NOTIFY_WEBHOOK }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            python -m pipeline.main --scheduled
+          else
+            python -m pipeline.main
+          fi
+
+      - name: Keep the video (download from this run's page)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: short-video
+          path: out/*.mp4
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Save topic history
+        if: success()
+        run: |
+          git config user.name "narravix69-bot"
+          git config user.email "narravix69-bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || git commit -m "Log posted short [skip ci]"
+          git push || true
