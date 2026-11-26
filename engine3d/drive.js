@@ -9,7 +9,12 @@ const W = +arg('--w', 720), H = +arg('--h', 1280), STILL = arg('--still', null),
 const FONT_ANTON = process.env.FONT_ANTON || '/usr/share/fonts/truetype/google-fonts/ofl/anton/Anton-Regular.ttf';
 const FONT_POPPINS = process.env.FONT_POPPINS || '/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf';
 (async () => {
-  const b = await pw.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  // With a lavapipe ICD (Mesa's multithreaded LLVM Vulkan driver) WebGL runs several times faster than SwiftShader.
+  const lvp = process.env.VK_ICD_FILENAMES && fs.existsSync(process.env.VK_ICD_FILENAMES);
+  const args = lvp
+    ? ['--use-angle=vulkan', '--ignore-gpu-blocklist', '--disable-gpu-compositing', '--disable-gpu-rasterization', '--disable-accelerated-2d-canvas', '--disable-gpu-watchdog']
+    : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+  const b = await pw.chromium.launch({ args });
   const p = await b.newPage({ viewport: { width: W, height: H } });
   p.on('pageerror', e => console.log('ERR', e.message));
   await p.route('http://local/**', async r => {
