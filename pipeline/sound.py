@@ -95,6 +95,22 @@ def impact(rng):
             0.3 * _lowpass(rng.standard_normal(ln), 4) * np.exp(-tt * 14)) * 0.7
 
 
+LOOP = __import__("pathlib").Path(__file__).resolve().parent.parent / "assets" / "numbers_loop.ogg"
+
+
+def numbers_loop(n):
+    """The first 10 s of the channel's theme, looped seamlessly to length n (None if the file is missing)."""
+    if not LOOP.exists():
+        return None
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(LOOP), "-f", "s16le", "-ac", "1", "-ar", str(SR), "-"],
+                         capture_output=True, check=True).stdout
+    a = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768
+    if len(a) < SR:
+        return None
+    a = np.tile(a, n // len(a) + 2)[:n]
+    return a / (np.sqrt(np.mean(a ** 2)) + 1e-6) * 0.07
+
+
 def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0):
     rng = np.random.default_rng(seed)
     voice = _read_wav(voice_wav)
@@ -119,9 +135,15 @@ def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0
             add(pop(), sc["start"] + 0.1, 0.3)
     out = v * 1.0 + fx
     if music:
-        m = music_bed(n / SR, mood, seed)[:n]
+        m = numbers_loop(n)
         env = _lowpass(np.abs(v), int(0.25 * SR))
-        duck = 1 - 0.65 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
+        if m is None:
+            m = music_bed(n / SR, mood, seed)[:n] * 0.35
+            duck = 1 - 0.65 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
+        else:  # keep the song present but tucked under the voice
+            duck = 1 - 0.4 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
+            fade = np.minimum(1.0, (n - np.arange(n)) / (1.2 * SR))  # fade out at the end
+            m = m * fade
         if len(scenes) > 2:  # drop the music out just before the punchline
             ps = scenes[-1]["start"]
             a, b = int((ps - 0.9) * SR), int((ps + 0.2) * SR)
@@ -129,7 +151,7 @@ def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0
             g[max(0, a):max(0, b)] = 0.0
             g = _lowpass(g, int(0.15 * SR))
             m *= g[:len(m)]
-        out += m * duck * 0.35
+        out += m * duck
     _write_wav(out_wav, out * 0.8)
 
 

@@ -18,7 +18,8 @@ def env(name, default=""):
 GEMINI_API_KEY = env("GEMINI_API_KEY")
 GEMINI_MODEL = env("GEMINI_MODEL", "gemini-flash-latest")
 VOICE = env("VOICE", "am_michael")
-VOICE_SPEED = float(env("VOICE_SPEED", "1.0"))
+VOICE_SPEED = float(env("VOICE_SPEED", "1.12"))   # a bit faster
+VOICE_PITCH = float(env("VOICE_PITCH", "0.92"))   # below 1 = deeper (duration unchanged)
 POSTS_PER_DAY = int(env("POSTS_PER_DAY", "4"))
 DRY_RUN = env("DRY_RUN", "false").lower() in ("1", "true", "yes")
 

@@ -16,7 +16,7 @@ ACTIONS = ["idle", "talk", "walk", "run", "point", "cheer", "shock", "scared", "
            "jump", "punch", "dance", "fall", "lie", "float", "wave", "sit"]
 MOODS = ["happy", "excited", "laugh", "neutral", "sad", "crying", "worried", "scared", "terrified", "shocked",
          "angry", "shouting", "smug", "determined", "powerful", "tired", "blank", "panic"]
-SHOTS = ["wide", "medium", "close", "low", "ots", "pov", "drone", "track", "dutch", "reveal"]
+SHOTS = ["wide", "medium", "close", "low", "ots", "pov", "drone", "track", "dutch", "reveal", "ecu", "detail"]
 FX = ["rain", "snow", "fire", "smoke", "confetti", "fireworks", "sparkles", "money", "shake"]
 PROPS = ["car", "dog", "cash", "box", "jar", "trophy", "tv"]
 LOOKS = ["normal", "gray", "night", "red", "warm", "cold", "dream"]
@@ -53,9 +53,13 @@ Story rules:
 
 Directing rules (you are the camera operator too):
 - Exactly one scene object per sentence of the script, in order, "sentence" = 0-based index.
+- The world is a shiny, gold, rich downtown like New York and San Francisco: use "city_day" (golden hour) or
+  "city_night" for at least half of the scenes. Other stages are for moments that clearly happen indoors.
+- The hero is a confident, rich, stylish guy (all black fit, gold chains, iced-out watch); write him that way.
 - Pick the stage that best fits each sentence; stay in a location for 2-3 sentences, then move on.
 - Open on a "close" or "low" shot of the hero; use "reveal" when the scale of something is shown,
-  "drone" for big events, "dutch" for chaos, "ots"/"pov" only when another character is present, "wide" to set a place.
+  "drone" for big events, "dutch" for chaos, "ots"/"pov" only when another character is present, "wide" to set a place,
+  "ecu" (extreme close-up on the face) for big emotions and reactions, "detail" (close on the chains and watch) once per video.
 - Vary shots: never use the same shot twice in a row.
 - The hero (outfit "hero") appears in every scene. Up to 3 more characters; use "crowd" for groups.
 - Mood and action must match what the sentence says. Use "shake" for impacts and "fx" sparingly.

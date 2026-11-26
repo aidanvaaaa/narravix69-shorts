@@ -46,7 +46,21 @@ def kokoro_tts(text, path):
         offset += len(audio) / SR
     audio = np.concatenate(chunks) if chunks else np.zeros(SR)
     _write_wav(path, audio)
+    deepen(path)
     return words, len(audio) / SR
+
+
+def deepen(path):
+    """Lower the pitch (VOICE_PITCH < 1) while keeping the same length, so word timings stay valid."""
+    p = config.VOICE_PITCH
+    if abs(p - 1.0) < 0.01:
+        return
+    import os
+    import subprocess
+    tmp = str(path) + ".deep.wav"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(path), "-af",
+                    f"asetrate={SR}*{p},aresample={SR},atempo={1 / p:.5f}", "-ar", str(SR), "-ac", "1", tmp], check=True)
+    os.replace(tmp, path)
 
 
 def whisper_words(path):
