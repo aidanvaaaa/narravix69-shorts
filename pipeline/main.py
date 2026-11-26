@@ -10,7 +10,7 @@ import time
 import traceback
 
 
-from . import config, render, script, sound, upload, voice
+from . import config, render3d, script, sound, upload, voice
 
 
 def log(msg):
@@ -82,11 +82,10 @@ def main():
         vwav = config.OUT / f"{name}_voice.wav"
         log("recording voice")
         words, vdur = voice.narrate(plan["script"], vwav, fake=a.fake_voice)
-        duration = vdur + 0.6
+        duration = vdur + 1.8  # room for the end card
         log(f"voice {vdur:.1f}s, {len(words)} timed words; rendering")
         silent = config.OUT / f"{name}_silent.mp4"
-        scenes, samples = render.render_video(plan, words, duration, silent, seed=seed,
-                                              progress=lambda i, n: log(f"  frame {i}/{n}"))
+        scenes, samples = render3d.render_video(plan, words, duration, silent, seed=seed, progress=log)
         log("mixing sound")
         mixwav = config.OUT / f"{name}_mix.wav"
         sound.mix(vwav, scenes, duration, mixwav, music=not a.no_music, mood=plan["format"], seed=seed)

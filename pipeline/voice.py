@@ -30,12 +30,18 @@ def kokoro_tts(text, path):
     chunks, words, offset = [], [], 0.0
     for res in pipe(text, voice=config.VOICE, speed=config.VOICE_SPEED, split_pattern=r"\n+"):
         audio = res.audio.detach().cpu().numpy() if hasattr(res.audio, "detach") else np.asarray(res.audio)
+        glue = False  # previous token had no space after it ("ca" + "n't", "it" + "'s")
         for tok in (getattr(res, "tokens", None) or []):
             w = _clean_word(getattr(tok, "text", ""))
             st, en = getattr(tok, "start_ts", None), getattr(tok, "end_ts", None)
             if w and st is not None and en is not None:
-                words.append({"word": tok.text.strip(), "start": offset + float(st),
-                              "end": offset + float(en)})
+                if glue and words:
+                    words[-1]["word"] += tok.text.strip()
+                    words[-1]["end"] = offset + float(en)
+                else:
+                    words.append({"word": tok.text.strip(), "start": offset + float(st),
+                                  "end": offset + float(en)})
+            glue = not getattr(tok, "whitespace", " ") and bool(w)
         chunks.append(audio)
         offset += len(audio) / SR
     audio = np.concatenate(chunks) if chunks else np.zeros(SR)

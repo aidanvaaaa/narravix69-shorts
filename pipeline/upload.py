@@ -9,7 +9,8 @@ from . import config
 
 def caption_text(plan):
     tags = " ".join("#" + h for h in plan["hashtags"])
-    return f"{plan['title']}\n\n{tags} #shorts"
+    desc = plan.get("description") or ""
+    return f"{plan['title']}\n\n{desc}\n\nFollow @narravix69 for more.\n\n{tags} #shorts".replace("\n\n\n\n", "\n\n")
 
 
 # ---------------------------------------------------------------- YouTube

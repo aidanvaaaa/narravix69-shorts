@@ -1,0 +1,282 @@
+{
+ "format": "what_if",
+ "topic": "gravity turns off for one hour",
+ "title": "What If Gravity Turned Off For 1 Hour?",
+ "script": "What if gravity turned off for one hour? At first it's awesome. You jump once and just keep floating. Your friends are flipping through the air laughing. But then the cars start lifting off the road. Your house groans as it peels away from the ground. Your dog is drifting toward the clouds and you can't reach him. The whole city is floating now, and nobody knows how to get down. Then the hour ends. And everything comes crashing back at once. So maybe stay on the ground.",
+ "keywords": [
+  "gravity",
+  "floating",
+  "cars",
+  "dog",
+  "city",
+  "crashing"
+ ],
+ "hud_values": [
+  "0:00",
+  "0:05",
+  "0:12",
+  "0:20",
+  "0:31",
+  "0:40",
+  "0:48",
+  "0:59",
+  "1:00",
+  "1:00",
+  "1:00"
+ ],
+ "scenes": [
+  {
+   "stage": "city_day",
+   "shots": [
+    "close",
+    "reveal"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "think",
+     "mood": "worried"
+    }
+   ],
+   "fx": [],
+   "sentence": 0
+  },
+  {
+   "stage": "city_day",
+   "shots": [
+    "medium"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "cheer",
+     "mood": "excited"
+    }
+   ],
+   "fx": [
+    "sparkles"
+   ],
+   "sentence": 1
+  },
+  {
+   "stage": "city_day",
+   "shots": [
+    "low",
+    "track"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "float",
+     "mood": "excited"
+    }
+   ],
+   "fx": [],
+   "sentence": 2
+  },
+  {
+   "stage": "festival",
+   "shots": [
+    "wide",
+    "medium"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "float",
+     "mood": "laugh"
+    },
+    {
+     "role": "other",
+     "outfit": "friend",
+     "action": "float",
+     "mood": "laugh"
+    },
+    {
+     "role": "other",
+     "outfit": "girl",
+     "action": "float",
+     "mood": "excited"
+    }
+   ],
+   "fx": [
+    "confetti"
+   ],
+   "sentence": 3
+  },
+  {
+   "stage": "highway",
+   "shots": [
+    "wide",
+    "dutch"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "shock",
+     "mood": "shocked"
+    }
+   ],
+   "props": [
+    "car",
+    "car"
+   ],
+   "fx": [
+    "shake"
+   ],
+   "sentence": 4
+  },
+  {
+   "stage": "suburb_day",
+   "shots": [
+    "low",
+    "drone"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "scared",
+     "mood": "scared"
+    }
+   ],
+   "fx": [
+    "shake",
+    "smoke"
+   ],
+   "sentence": 5
+  },
+  {
+   "stage": "suburb_day",
+   "shots": [
+    "close",
+    "ots"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "point",
+     "mood": "crying"
+    },
+    {
+     "role": "other",
+     "outfit": "kid",
+     "action": "float",
+     "mood": "scared"
+    }
+   ],
+   "props": [
+    "dog"
+   ],
+   "fx": [],
+   "sentence": 6
+  },
+  {
+   "stage": "city_night",
+   "shots": [
+    "drone",
+    "wide"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "float",
+     "mood": "terrified"
+    },
+    {
+     "role": "crowd",
+     "outfit": "worker",
+     "action": "float",
+     "mood": "panic"
+    },
+    {
+     "role": "crowd",
+     "outfit": "mom",
+     "action": "float",
+     "mood": "scared"
+    }
+   ],
+   "fx": [],
+   "sentence": 7
+  },
+  {
+   "stage": "red_room",
+   "shots": [
+    "close"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "scared",
+     "mood": "terrified"
+    }
+   ],
+   "fx": [],
+   "sentence": 8
+  },
+  {
+   "stage": "city_night",
+   "shots": [
+    "dutch",
+    "low"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "fall",
+     "mood": "terrified"
+    }
+   ],
+   "fx": [
+    "shake",
+    "smoke",
+    "fire"
+   ],
+   "sentence": 9
+  },
+  {
+   "stage": "suburb_day",
+   "shots": [
+    "medium"
+   ],
+   "characters": [
+    {
+     "role": "hero",
+     "outfit": "hero",
+     "action": "talk",
+     "mood": "smug"
+    }
+   ],
+   "fx": [],
+   "sentence": 10
+  }
+ ],
+ "title_lines": [
+  "WHAT IF GRAVITY",
+  "TURNED OFF?"
+ ],
+ "description": "One hour with no gravity sounds fun... until it isn't. What would you grab first?",
+ "hashtags": [
+  "whatif",
+  "gravity",
+  "animation",
+  "shorts",
+  "3danimation",
+  "story",
+  "fyp"
+ ],
+ "hud": {
+  "tag": "\u25cf LIVE",
+  "sub": "GRAVITY: OFF",
+  "label": "TIME WITHOUT GRAVITY"
+ }
+}

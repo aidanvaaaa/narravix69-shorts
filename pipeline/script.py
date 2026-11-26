@@ -8,38 +8,55 @@ import requests
 
 from . import config
 
-BACKGROUNDS = ["grass_plains", "blocky_city", "night_city", "space", "ocean", "beach",
-               "desert", "forest", "snow", "lava", "castle", "village", "arena",
-               "classroom", "house", "sky", "pyramids", "battlefield", "ship_deck", "factory"]
-OUTFITS = ["none", "hoodie", "knight", "viking", "pharaoh", "samurai", "astronaut",
-           "peasant", "king", "soldier", "worker", "scientist", "pirate", "gladiator", "chef"]
-ACTIONS = ["idle", "talk", "walk", "run", "jump", "shock", "fall", "grow", "shrink",
-           "float", "fight", "think", "celebrate", "sad", "sleep", "work"]
-MOODS = ["happy", "sad", "angry", "scared", "shocked", "smug", "tired", "neutral"]
+STAGES = ["bedroom", "livingroom", "school_hall", "gym", "garage", "kitchen", "shop", "cafeteria", "diner",
+          "party_room", "city_day", "city_night", "suburb_night", "suburb_day", "schoolyard", "festival",
+          "highway", "red_room", "void"]
+OUTFITS = ["hero", "friend", "girl", "villain", "parent", "mom", "teacher", "grandma", "athlete", "worker", "cop", "kid"]
+ACTIONS = ["idle", "talk", "walk", "run", "point", "cheer", "shock", "scared", "think", "sad", "phone",
+           "jump", "punch", "dance", "fall", "lie", "float", "wave", "sit"]
+MOODS = ["happy", "excited", "laugh", "neutral", "sad", "crying", "worried", "scared", "terrified", "shocked",
+         "angry", "shouting", "smug", "determined", "powerful", "tired", "blank", "panic"]
+SHOTS = ["wide", "medium", "close", "low", "ots", "pov", "drone", "track", "dutch", "reveal"]
+FX = ["rain", "snow", "fire", "smoke", "confetti", "fireworks", "sparkles", "money", "shake"]
+PROPS = ["car", "dog", "cash", "box", "jar", "trophy", "tv"]
 
-SYSTEM = f"""You write viral 45-60 second vertical short videos for the channel narravix69.
-Return ONLY JSON matching this shape:
+SYSTEM = f"""You write AND direct viral 35-55 second vertical 3D animated shorts for the channel narravix69,
+in a blocky game-style world. Return ONLY JSON matching this shape:
 {{"format": "what_if" | "why_it_sucks",
   "topic": "short topic label",
   "title": "under 60 characters, curiosity-driven, no hashtags",
-  "script": "130-160 words, ONE paragraph",
-  "hashtags": ["5 to 8 hashtags without #"],
-  "scenes": [{{"sentence": 0, "background": one of {BACKGROUNDS},
-              "characters": [{{"role": "hero"|"other"|"villain", "outfit": one of {OUTFITS},
+  "title_lines": ["2 short lines for the on-screen hook title, max 18 characters each, UPPERCASE"],
+  "description": "1-2 sentence post caption that teases the story and asks a question",
+  "script": "100-140 words, ONE paragraph, narrated in second person or as a story",
+  "hashtags": ["6 to 10 hashtags without #, mix of broad (shorts, animation) and topic tags"],
+  "keywords": ["4-8 single words from the script to highlight in the captions"],
+  "hud": {{"tag": "short status like ● LIVE or DAY 1", "sub": "short status line, max 18 chars",
+           "label": "what the counter measures, max 22 chars"}},
+  "hud_values": ["one counter value per sentence that escalates, e.g. a timer, a day count, money, a percentage"],
+  "scenes": [{{"sentence": 0, "stage": one of {STAGES},
+              "shots": [1-2 camera shots from {SHOTS}],
+              "characters": [{{"role": "hero"|"other"|"crowd", "outfit": one of {OUTFITS},
                                "mood": one of {MOODS}, "action": one of {ACTIONS}}}],
-              "dialogue": "optional, under 6 words, said by the first character",
-              "caption_keyword": "one key word from that sentence"}}]}}
+              "fx": [0-2 effects from {FX}],
+              "props": [0-2 props from {PROPS}]}}]}}
 
-Rules:
+Story rules:
 - The FIRST sentence is the hook and must grab attention in the first second. No intro, no "in this video".
-- Short punchy sentences. A concrete surprising detail every 2-3 sentences.
-- what_if: a dramatic "What if..." premise in a blocky game-like world, escalating stakes, a twist ending.
-- why_it_sucks: second person ("You're born in..."), dark-funny, ONLY real, widely documented history.
-  Hedge legends ("reportedly"). Never invent numbers, names or quotes.
+- Short punchy sentences (6-14 words). A concrete surprising detail every 2-3 sentences. Escalate.
+- what_if: a dramatic "What if..." premise in a modern blocky world, escalating stakes, a twist ending.
+- why_it_sucks: "Why it sucks to be ..." about a relatable modern role or situation (the youngest sibling,
+  the new kid, the last one picked, a night-shift worker, the kid whose birthday is on a holiday...), dark-funny.
 - End with a punchline or a question that makes people comment.
-- Write numbers as words. No real living people, no brand names or trademarked game names, no copyrighted characters.
+- Write numbers as words. No real people, no brand names, no trademarked game names, no copyrighted characters.
+
+Directing rules (you are the camera operator too):
 - Exactly one scene object per sentence of the script, in order, "sentence" = 0-based index.
-- 1 to 3 characters per scene; the hero appears in most scenes. Faces always toward the viewer.
+- Pick the stage that best fits each sentence; stay in a location for 2-3 sentences, then move on.
+- Open on a "close" or "low" shot of the hero; use "reveal" when the scale of something is shown,
+  "drone" for big events, "dutch" for chaos, "ots"/"pov" only when another character is present, "wide" to set a place.
+- Vary shots: never use the same shot twice in a row.
+- The hero (outfit "hero") appears in every scene. Up to 3 more characters; use "crowd" for groups.
+- Mood and action must match what the sentence says. Use "shake" for impacts and "fx" sparingly.
 """
 
 
@@ -72,31 +89,45 @@ def split_sentences(text):
     return [p for p in parts if p.strip()]
 
 
+def _pick(v, allowed, default):
+    return v if v in allowed else default
+
+
 def _clean(plan):
     n = len(split_sentences(plan["script"]))
     scenes = {s.get("sentence", i): s for i, s in enumerate(plan.get("scenes", []))}
-    fixed = []
-    last = None
+    fixed, last = [], None
     for i in range(n):
-        s = scenes.get(i) or last or {}
-        s = dict(s)
+        s = dict(scenes.get(i) or last or {})
         s["sentence"] = i
-        if s.get("background") not in BACKGROUNDS:
-            s["background"] = (last or {}).get("background", random.choice(BACKGROUNDS))
+        s["stage"] = _pick(s.get("stage"), STAGES, (last or {}).get("stage", "city_day"))
+        s["shots"] = [x for x in (s.get("shots") or []) if x in SHOTS][:2] or ["medium"]
         chars = []
-        for c in (s.get("characters") or [{"role": "hero"}])[:3]:
-            chars.append({"role": c.get("role", "hero"),
-                          "outfit": c.get("outfit") if c.get("outfit") in OUTFITS else "none",
-                          "mood": c.get("mood") if c.get("mood") in MOODS else "neutral",
-                          "action": c.get("action") if c.get("action") in ACTIONS else "idle"})
+        for c in (s.get("characters") or [{"role": "hero"}])[:4]:
+            chars.append({"role": _pick(c.get("role"), ["hero", "other", "crowd"], "other"),
+                          "outfit": _pick(c.get("outfit"), OUTFITS, "friend"),
+                          "mood": _pick(c.get("mood"), MOODS, "neutral"),
+                          "action": _pick(c.get("action"), ACTIONS, "idle")})
+        if not any(c["role"] == "hero" for c in chars):
+            chars.insert(0, {"role": "hero", "outfit": "hero", "mood": "neutral", "action": "talk"})
+        for c in chars:
+            if c["role"] == "hero":
+                c["outfit"] = "hero"
         s["characters"] = chars
-        d = (s.get("dialogue") or "").strip()
-        s["dialogue"] = " ".join(d.split()[:6])
+        s["fx"] = [x for x in (s.get("fx") or []) if x in FX][:2]
+        s["props"] = [x for x in (s.get("props") or []) if x in PROPS][:2]
         fixed.append(s)
         last = s
     plan["scenes"] = fixed
-    plan["hashtags"] = [h.lstrip("#").replace(" ", "") for h in plan.get("hashtags", [])][:8]
+    plan["hashtags"] = [h.lstrip("#").replace(" ", "") for h in plan.get("hashtags", []) if h][:10]
     plan["title"] = plan.get("title", "")[:90]
+    tl = [str(x).upper()[:22] for x in (plan.get("title_lines") or []) if x][:2]
+    plan["title_lines"] = tl or [plan["title"].upper()[:22]]
+    plan["keywords"] = [str(k) for k in plan.get("keywords", [])][:8]
+    hud = plan.get("hud") if isinstance(plan.get("hud"), dict) else {}
+    plan["hud"] = {k: str(hud.get(k, ""))[:24] for k in ("tag", "sub", "label")}
+    plan["hud_values"] = [str(v)[:10] for v in plan.get("hud_values", [])][:n]
+    plan["description"] = str(plan.get("description", ""))[:300]
     return plan
 
 
@@ -110,7 +141,7 @@ def write_plan(used_topics, fmt=None):
         try:
             plan = _call_gemini(prompt)
             words = len(plan.get("script", "").split())
-            if not 110 <= words <= 180:
+            if not 90 <= words <= 165:
                 err = f"script length {words} words"
                 continue
             plan["format"] = fmt
@@ -121,36 +152,7 @@ def write_plan(used_topics, fmt=None):
     raise RuntimeError(f"Could not get a valid script from Gemini: {err}")
 
 
-SAMPLE = {
-    "format": "what_if", "topic": "what if gravity turned off for ten seconds",
-    "title": "What If Gravity Turned Off For 10 Seconds?",
-    "script": ("What if gravity switched off for exactly ten seconds? At second one, you lift off "
-               "your bed like a balloon. Your cat is floating past the window, very confused. "
-               "Second three, every car on the highway drifts up like a toy. Oceans start rising "
-               "into giant wobbling blobs. At second five, the air itself begins to leak away into "
-               "space. You grab a lamp post and hold on for your life. Second eight, your best "
-               "friend floats by eating a sandwich, totally calm. Then gravity snaps back on. "
-               "Everything falls at once, and the loudest crash in history shakes the whole world. "
-               "Somehow, you land right back in bed. And the cat lands on its feet, of course. "
-               "Would you have grabbed the lamp post, or the sandwich?"),
-    "hashtags": ["whatif", "gravity", "animation", "shorts", "blocky", "story"],
-    "scenes": [],
-}
-
-
 def sample_plan():
-    bgs = ["sky", "house", "house", "blocky_city", "ocean", "space", "night_city", "sky",
-           "blocky_city", "battlefield", "house", "house", "grass_plains"]
-    acts = ["shock", "float", "float", "float", "shock", "float", "fight", "float", "fall",
-            "fall", "sleep", "celebrate", "talk"]
-    dlg = ["Uh oh!", "", "", "My car!", "", "I can't breathe!", "Hold on!", "Want some?",
-           "", "AAAH!", "", "", ""]
-    p = dict(SAMPLE)
-    n = len(split_sentences(p["script"]))
-    p["scenes"] = [{"sentence": i, "background": bgs[i % len(bgs)],
-                    "characters": [{"role": "hero", "outfit": "hoodie", "mood": "shocked",
-                                    "action": acts[i % len(acts)]}] +
-                                  ([{"role": "other", "outfit": "none", "mood": "happy",
-                                     "action": "float"}] if i in (7, 12) else []),
-                    "dialogue": dlg[i % len(dlg)], "caption_keyword": ""} for i in range(n)]
+    import pathlib
+    p = json.loads((pathlib.Path(__file__).parent / "sample_plan.json").read_text())
     return _clean(p)

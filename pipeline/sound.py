@@ -113,6 +113,10 @@ def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0
     add(pop(), 0.05, 0.4)
     for sc in scenes[1:]:
         add(whoosh(rng), max(0, sc["start"] - 0.12), 0.18)
+        if "shake" in (sc.get("fx") or []) or "fire" in (sc.get("fx") or []):
+            add(impact(rng), sc["start"] + 0.05, 0.45)
+        if set(sc.get("fx") or []) & {"confetti", "sparkles", "fireworks", "money"}:
+            add(pop(), sc["start"] + 0.1, 0.3)
     out = v * 1.0 + fx
     if music:
         m = music_bed(n / SR, mood, seed)[:n]
