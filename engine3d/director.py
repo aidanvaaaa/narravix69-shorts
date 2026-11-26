@@ -16,6 +16,7 @@ import numpy as np
 from . import engine
 from .engine import export, C, rot, M4, box, lerp, ease, eout, shake, walk
 from .psets import *  # noqa: F401,F403  (all sets, props, characters)
+from .luxsets import lux_city, decorate
 
 FPS = 30
 
@@ -32,8 +33,8 @@ STAGES = {
     'cafeteria':    (lambda sc, t: cafeteria(sc, t), (0, 0, 2), (-12, 12, -10, 10, 8.4)),
     'diner':        (lambda sc, t: diner(sc, t), (0, 0, 0), (-8.4, 8.4, -7.4, 7.4, 8.0)),
     'party_room':   (lambda sc, t: party_room(sc, t), (3, 0, 1), (-8.4, 8.4, -7.4, 7.4, 7.6)),
-    'city_day':     (lambda sc, t: city_street(sc, t, tod='day'), (0, 0, 4), None),
-    'city_night':   (lambda sc, t: city_street(sc, t, tod='night'), (0, 0, 4), None),
+    'city_day':     (lambda sc, t: lux_city(sc, t, night=False), (0, 0, 4), None),
+    'city_night':   (lambda sc, t: lux_city(sc, t, night=True), (0, 0, 4), None),
     'suburb_night': (lambda sc, t: street(sc), (0, 0.24, 8), None),
     'suburb_day':   (lambda sc, t: street_day(sc, t), (0, 0, 14), None),
     'schoolyard':   (lambda sc, t: schoolyard(sc, t), (0, 0, 3), None),
@@ -59,7 +60,7 @@ def _rot_about(p, H, yaw):
 
 # ---------------------------------------------------------------------- characters
 OUTFITS = {
-    'hero':     dict(design='hoodie', skin='#f0c8a0', arms='#3a7ae8', shirt='#3a7ae8', pants='#2a3348', cuff='#f0c8a0', hair='short', haircol='#5a3418', shoes='#f2f2f2'),
+    'hero':     dict(design='hoodie', skin='#f0c8a0', arms='#141418', shirt='#141418', pants='#0f0f12', cuff='#f0c8a0', hair='short', haircol='#16120f', shoes='#f6f6f6', slit=True),
     'friend':   dict(design='tee_logo', skin='#c98a5a', arms='#ff7a3a', shirt='#ff7a3a', pants='#24242e', cuff='#c98a5a', hair='curly', haircol='#1a1210', shoes='#ffd24a'),
     'girl':     dict(design='tee', skin='#f0c8a0', shirt='#ff6ab0', pants='#2a2a3a', cuff='#f0c8a0', hair='long', haircol='#3a2010', skirt='#7a5aff', shoes='#ffffff'),
     'villain':  dict(design='torn', skin='#a8b0b8', arms='#2a2a30', shirt='#2a2a30', pants='#141418', cuff='#a8b0b8', hair='bandana', haircol='#c42a2a', shoes='#111111'),
@@ -73,6 +74,67 @@ OUTFITS = {
     'kid':      dict(design='tee', skin='#f0c8a0', shirt='#4ad88a', pants='#3a3a52', cuff='#f0c8a0', hair='short', haircol='#2a1a10', shoes='#ff5a5a'),
 }
 CROWD_SHIRTS = ['#ff5a8a', '#5ac8ff', '#ffd24a', '#8aff6a', '#c08aff', '#ff9a3a', '#e8e8e8']
+GOLDC = '#e2b23c'
+
+
+def drip(out, base, hm, arms):
+    """Hero jewellery: three gold chains (short, medium, long with a diamond pendant), iced watches, diamond studs."""
+    t = engine.TIME[0]
+    for i, (depth, w) in enumerate(((0.45, 0.48), (0.8, 0.6), (1.15, 0.7))):
+        n = 13 + i * 2
+        for k in range(n):
+            u = -1 + 2 * k / (n - 1)
+            x = u * w; y = 3.97 - (1 - u * u) * depth
+            ang = math.degrees(math.atan2(2 * u * depth, 1)) * 0.55
+            out.append(box((x, y, 0.55 + 0.012 * i), (0.12, 0.09, 0.08), GOLDC, parent=base, rl=2, emit=0.12, R=rot(0, 0, ang)))
+    out.append(box((0, 2.75, 0.6), (0.36, 0.4, 0.08), GOLDC, parent=base, rl=2, emit=0.15))
+    out.append(box((0, 2.75, 0.65), (0.2, 0.2, 0.04), '#ffffff', parent=base, R=rot(0, 0, 45), emit=1.6 + 0.8 * math.sin(t * 7), shade=False))
+    for key in ('la', 'ra'):
+        el = arms[key]
+        out.append(box((0, -0.58, 0), (0.98, 0.22, 0.98), '#e9eef6', parent=el, rl=4, emit=0.5))
+        for j, (dx, dz) in enumerate(((0, 0.5), (0.5, 0), (-0.5, 0), (0, -0.5))):
+            tw = 1.2 + 1.5 * max(0.0, math.sin(t * 9 + j * 1.7 + (key == 'ra') * 2))
+            out.append(box((dx, -0.58, dz), (0.16, 0.16, 0.16), '#ffffff', parent=el, emit=tw, shade=False, nocast=True))
+    for sx in (-1, 1):
+        out.append(box((sx * 0.67, 0.5, 0.05), (0.08, 0.14, 0.14), '#ffffff', parent=hm, emit=1.8, shade=False, nocast=True))
+
+
+NICE = [  # extras dress sharp and never like the hero (no all-black)
+    dict(design='collar', shirt='#f4f4f4', arms='#1f2f5a', pants='#1f2f5a', shoes='#5a3420'),          # navy suit
+    dict(design='collar', shirt='#f4f4f4', arms='#6a1f2a', pants='#6a1f2a', shoes='#2a1a12'),          # burgundy suit
+    dict(design='collar', shirt='#2a2a30', arms='#e8dcc0', pants='#e8dcc0', shoes='#f4f4f4'),          # cream suit
+    dict(design='collar', shirt='#f4f4f4', arms='#1f5a46', pants='#1f5a46', shoes='#3a2418'),          # emerald suit
+    dict(design='tee_logo', shirt='#f4efe4', arms='#f4efe4', pants='#c8a87a', shoes='#f4f4f4'),         # cream tee, khakis
+    dict(design='collar', shirt='#ffffff', arms='#6a4228', pants='#2a3348', shoes='#6a4228'),          # leather jacket
+    dict(design='tee', shirt='#ff8fb0', arms='#ff8fb0', pants='#f4f4f4', shoes='#ffd24a'),             # pastel fit
+    dict(design='collar', shirt='#f4f4f4', arms='#8a8f98', pants='#8a8f98', shoes='#1a1a1e'),          # grey suit
+    dict(design='jersey', shirt='#2a6ad8', pants='#f4f4f4', shoes='#d42a3a'),                          # jersey + whites
+    dict(design='tee_logo', shirt='#7ac8ff', arms='#7ac8ff', pants='#3a4a6a', shoes='#f4f4f4'),         # sky blue fit
+]
+NICE_DRESS = ['#c84a7a', '#e8c24a', '#4a8ae8', '#e85a3a', '#8a5ad8', '#f4f4f4', '#3ab89a']
+SKINS = ['#f0c8a0', '#c98a5a', '#8a5a3a', '#e8b890', '#a8704a', '#f4d0b0']
+HAIRS = [('short', '#2a1a10'), ('curly', '#1a1210'), ('durag', '#c42a2a'), ('cap', '#1f2f5a'), ('short', '#d8b060'), ('beanie', '#e8c24a')]
+
+
+def nice_outfit(c, k):
+    """Pick a sharp, varied outfit for an extra, keeping role hints (girl/mom -> dress, cop stays cop, villain flashy)."""
+    o = c.get('outfit', 'friend')
+    if o in ('cop',):
+        return dict(OUTFITS['cop'])
+    h = (sum(map(ord, o)) + k * 7) % 997
+    skin = SKINS[h % len(SKINS)]
+    if o == 'villain':
+        return dict(design='collar', skin=skin, shirt='#111', arms='#7a1fa8', pants='#7a1fa8', cuff=skin, hair='bandana', haircol='#c42a2a', shoes='#f5c542', chain=True)
+    if o in ('girl', 'mom', 'grandma'):
+        dress = NICE_DRESS[h % len(NICE_DRESS)]
+        return dict(design='tee', skin=skin, shirt=dress, arms=skin, pants='#2a2a3a', cuff=skin, hair='gray' if o == 'grandma' else 'long',
+                    haircol='#d8d8de' if o == 'grandma' else ['#3a2010', '#1a1210', '#d8a040', '#7a2a1a'][h % 4], skirt=dress, shoes='#f4f4f4', chain='silver')
+    base = dict(NICE[h % len(NICE)])
+    hair, hc = HAIRS[(h // 3) % len(HAIRS)]
+    base.update(skin=skin, cuff=skin, hair='gray' if o in ('teacher', 'parent', 'grandma') else hair, haircol='#c8c8cc' if o == 'teacher' else hc)
+    if h % 3 == 0:
+        base['chain'] = 'silver'
+    return base
 
 FACE = {'happy': 'smile', 'smile': 'smile', 'excited': 'grin', 'laugh': 'snicker', 'neutral': 'neutral',
         'sad': 'sad', 'crying': 'tears', 'worried': 'worried', 'scared': 'scared', 'terrified': 'terror',
@@ -80,7 +142,7 @@ FACE = {'happy': 'smile', 'smile': 'smile', 'excited': 'grin', 'laugh': 'snicker
         'powerful': 'power', 'tired': 'sleep', 'blank': 'blank', 'panic': 'choke'}
 ACTIONS = ['idle', 'talk', 'walk', 'run', 'point', 'cheer', 'shock', 'scared', 'think', 'sad', 'phone',
            'jump', 'punch', 'dance', 'fall', 'lie', 'float', 'wave', 'sit']
-SHOTS = ['wide', 'medium', 'close', 'low', 'ots', 'pov', 'drone', 'track', 'dutch', 'reveal']
+SHOTS = ['wide', 'medium', 'close', 'low', 'ots', 'pov', 'drone', 'track', 'dutch', 'reveal', 'ecu', 'detail']
 FX = ['rain', 'snow', 'fire', 'smoke', 'confetti', 'fireworks', 'sparkles', 'money', 'shake']
 
 
@@ -121,9 +183,10 @@ def pose_for(action, t, lt, k=0):
 
 
 def put_character(sc, c, pos, yaw, t, lt, k, scale=1.0):
-    out = dict(OUTFITS.get(c.get('outfit', 'hero'), OUTFITS['hero']))
-    if c.get('role') == 'crowd':
-        out['shirt'] = out['arms'] = CROWD_SHIRTS[k % len(CROWD_SHIRTS)]
+    if c.get('role') == 'hero':
+        out = dict(OUTFITS['hero']); out['extra'] = drip
+    else:
+        out = nice_outfit(c, k)
     act = c.get('action', 'idle')
     face = FACE.get(c.get('mood', 'neutral'), 'neutral')
     if act in ('fall', 'lie'):
@@ -238,6 +301,13 @@ def camera(kind, H, lt, dur, seed, bounds, other=None, hero_scale=1.0):
         return (hx + side * 0.7 * s, hy + 4.9 * s, hz + d), head, 34, 0
     if kind == 'low':
         return lerp((hx + side * 1.6 * s, hy + 0.9, hz + 5.8 * s), (hx + side * 1.2 * s, hy + 0.8, hz + 5.0 * s), p), head + (0, 0.4 * s, 0), 60, side * 4
+    if kind == 'ecu':  # extreme close-up: the face fills the frame
+        d = lerp(3.4 * s, 2.9 * s, p)
+        return (hx + side * 0.25 * s, hy + 4.75 * s, hz + d), head + (0, 0.05 * s, 0), 30, 0
+    if kind == 'detail':  # drip shot: chains and watch, slow orbit
+        ang = math.radians(side * (25 - 30 * p))
+        d = 3.6 * s
+        return (hx + math.sin(ang) * d, hy + 3.3 * s, hz + math.cos(ang) * d), np.array([hx, hy + 3.0 * s, hz]), 34, side * 3
     if kind == 'dutch':
         return lerp((hx - side * 2.2 * s, hy + 3.6 * s, hz + 6.4 * s), (hx - side * 1.8 * s, hy + 3.8 * s, hz + 5.6 * s), p), head, 48, side * (14 + 4 * p)
     if kind == 'drone':
@@ -335,6 +405,7 @@ def build_frame(shot, lt, gt):
     builder, H, bounds, syaw = stage_info(st_name)
     sc = engine.Scene()
     builder(sc, gt)
+    decorate(sc, st_name, gt)
     obs = _obstacles([b for b in sc.boxes if not (b.size[1] < 0.3 and b.M[1, 3] < 0.4)]) if bounds else None
     if st_name in ('void', 'red_room'):  # these sets are moody; keep the hero readable
         sc.ambient = np.maximum(np.array(sc.ambient, float), 0.22)
