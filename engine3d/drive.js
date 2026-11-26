@@ -5,7 +5,7 @@ let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/npm-t
 const HERE = __dirname;
 const WORK = path.resolve(process.argv[2]); const shots = process.argv[3].split(',');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const W = +arg('--w', 720), H = +arg('--h', 1280), STILL = arg('--still', null);
+const W = +arg('--w', 720), H = +arg('--h', 1280), STILL = arg('--still', null), MS = arg('--ms', '4'), SMQ = arg('--sm', '2048');
 const FONT_ANTON = process.env.FONT_ANTON || '/usr/share/fonts/truetype/google-fonts/ofl/anton/Anton-Regular.ttf';
 const FONT_POPPINS = process.env.FONT_POPPINS || '/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf';
 (async () => {
@@ -21,7 +21,8 @@ const FONT_POPPINS = process.env.FONT_POPPINS || '/usr/share/fonts/truetype/goog
     else f = path.join(HERE, u.pathname);
     try { r.fulfill({ body: fs.readFileSync(f) }); } catch (e) { r.fulfill({ status: 404 }); }
   });
-  await p.goto(`http://local/renderer.html?w=${W}&h=${H}`); await p.evaluate(() => window.ready);
+  console.log('GL', await p.evaluate(() => { const g = document.createElement('canvas').getContext('webgl2'); const e = g.getExtension('WEBGL_debug_renderer_info'); return g.getParameter(e.UNMASKED_RENDERER_WEBGL); }));
+  await p.goto(`http://local/renderer.html?w=${W}&h=${H}&ms=${MS}&sm=${SMQ}`); await p.evaluate(() => window.ready);
   fs.mkdirSync(path.join(WORK, 'vid'), { recursive: true });
   for (const s of shots) {
     const n = await p.evaluate(s => loadShot(s), s);
