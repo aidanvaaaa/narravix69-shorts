@@ -93,6 +93,45 @@ def split_sentences(text):
     return [p for p in parts if p.strip()]
 
 
+_NUMS = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen "
+                                       "fourteen fifteen sixteen seventeen eighteen nineteen".split())}
+_NUMS.update({w: 10 * (i + 2) for i, w in enumerate("twenty thirty forty fifty sixty seventy eighty ninety".split())})
+_SCALE = {"hundred": 100, "thousand": 1000, "million": 1000000, "billion": 1000000000}
+_SHORT = {1000: "K", 1000000: "M", 1000000000: "B"}
+
+
+def digits(text):
+    """'ninety percent' -> '90%', 'one million' -> '1M', 'day one' -> 'DAY 1' (counter values must be short digits)."""
+    out, num, cur, big = [], None, 0, 0
+    def flush():
+        nonlocal num, cur, big
+        if num is not None:
+            v = big + cur
+            for k in (1000000000, 1000000, 1000):
+                if v >= k and v % k == 0:
+                    out.append(f"{v // k}{_SHORT[k]}"); break
+            else:
+                out.append(str(v))
+        num, cur, big = None, 0, 0
+    for w in re.findall(r"[A-Za-z]+|[^A-Za-z\s]+", str(text)):
+        lw = w.lower()
+        if lw in _NUMS:
+            num = True; cur += _NUMS[lw]
+        elif lw in _SCALE and num is not None:
+            if lw == "hundred":
+                cur = (cur or 1) * 100
+            else:
+                big += (cur or 1) * _SCALE[lw]; cur = 0
+        elif lw == "and" and num is not None:
+            continue
+        else:
+            flush()
+            out.append("%" if lw in ("percent", "pct") else w)
+    flush()
+    txt = " ".join(out).replace(" %", "%").replace("$ ", "$")
+    return re.sub(r"\s+", " ", txt).strip()
+
+
 def _pick(v, allowed, default):
     return v if v in allowed else default
 
@@ -130,8 +169,8 @@ def _clean(plan):
     plan["title_lines"] = tl or [plan["title"].upper()[:22]]
     plan["keywords"] = [str(k) for k in plan.get("keywords", [])][:8]
     hud = plan.get("hud") if isinstance(plan.get("hud"), dict) else {}
-    plan["hud"] = {k: str(hud.get(k, ""))[:24] for k in ("tag", "sub", "label")}
-    plan["hud_values"] = [str(v).upper()[:9] for v in plan.get("hud_values", [])][:n]
+    plan["hud"] = {k: digits(hud.get(k, ""))[:24] for k in ("tag", "sub", "label")}
+    plan["hud_values"] = [digits(v).upper()[:9] for v in plan.get("hud_values", [])][:n]
     plan["description"] = str(plan.get("description", ""))[:300]
     return plan
 
