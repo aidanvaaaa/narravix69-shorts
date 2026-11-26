@@ -24,7 +24,7 @@ concurrency:
 jobs:
   make-and-post:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +42,29 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg espeak-ng
           mkdir -p assets
           [ -f assets/ComicRelief-Bold.ttf ] || curl -sSL -o assets/ComicRelief-Bold.ttf https://github.com/google/fonts/raw/main/ofl/comicrelief/ComicRelief-Bold.ttf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache headless browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-v1
+
+      - name: 3D renderer (headless Chromium) and fonts
+        run: |
+          cd engine3d && npm init -y >/dev/null && npm install --silent playwright@1.49 && npx playwright install --with-deps chromium && cd ..
+          F=$HOME/fonts; mkdir -p $F/anton $F/cardo
+          G=https://github.com/google/fonts/raw/main/ofl
+          curl -sSL -o $F/anton/Anton-Regular.ttf $G/anton/Anton-Regular.ttf
+          curl -sSL -o $F/cardo/Cardo-Italic.ttf $G/cardo/Cardo-Italic.ttf
+          curl -sSL -o $F/cardo/Cardo-Bold.ttf $G/cardo/Cardo-Bold.ttf
+          curl -sSL -o $F/Poppins-Bold.ttf $G/poppins/Poppins-Bold.ttf
+          echo "FONT_DIR=$F" >> $GITHUB_ENV
+          echo "FONT_ANTON=$F/anton/Anton-Regular.ttf" >> $GITHUB_ENV
+          echo "FONT_POPPINS=$F/Poppins-Bold.ttf" >> $GITHUB_ENV
 
       - name: Cache voice models
         uses: actions/cache@v4
@@ -82,7 +105,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: short-video
-          path: out/*.mp4
+          path: |
+            out/*.mp4
+            out/*.json
           retention-days: 7
           if-no-files-found: ignore
 
