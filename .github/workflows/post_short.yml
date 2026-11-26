@@ -65,6 +65,9 @@ jobs:
           echo "FONT_DIR=$F" >> $GITHUB_ENV
           echo "FONT_ANTON=$F/anton/Anton-Regular.ttf" >> $GITHUB_ENV
           echo "FONT_POPPINS=$F/Poppins-Bold.ttf" >> $GITHUB_ENV
+          LVP=$(ls /usr/share/vulkan/icd.d/lvp_icd*.json | head -1); echo "lavapipe ICD: $LVP"
+          echo "VK_ICD_FILENAMES=$LVP" >> $GITHUB_ENV
+          echo "GALLIVM_PERF=no_aos_sampling" >> $GITHUB_ENV
 
       - name: Cache voice models
         uses: actions/cache@v4
