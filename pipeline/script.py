@@ -44,18 +44,27 @@ Rules:
 
 
 def _call_gemini(prompt):
-    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
-           f"{config.GEMINI_MODEL}:generateContent")
     body = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": 1.0}}
-    r = requests.post(url, params={"key": config.GEMINI_API_KEY}, json=body, timeout=120)
-    if r.status_code == 429:
-        time.sleep(60)
-        r = requests.post(url, params={"key": config.GEMINI_API_KEY}, json=body, timeout=120)
-    r.raise_for_status()
-    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-    return json.loads(text)
+    models = [m for m in dict.fromkeys([config.GEMINI_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"]) if m]
+    last = None
+    for attempt in range(4):
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            try:
+                r = requests.post(url, params={"key": config.GEMINI_API_KEY}, json=body, timeout=120)
+            except requests.RequestException as e:
+                last = f"{model}: {type(e).__name__}"
+                continue
+            if r.status_code == 200:
+                text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                return json.loads(text)
+            last = f"{model}: HTTP {r.status_code} {r.text[:200]}"
+            if r.status_code in (401, 403):
+                raise RuntimeError(last)
+        time.sleep(20 * (attempt + 1))
+    raise RuntimeError(last)
 
 
 def split_sentences(text):
