@@ -19,6 +19,7 @@ MOODS = ["happy", "excited", "laugh", "neutral", "sad", "crying", "worried", "sc
 SHOTS = ["wide", "medium", "close", "low", "ots", "pov", "drone", "track", "dutch", "reveal"]
 FX = ["rain", "snow", "fire", "smoke", "confetti", "fireworks", "sparkles", "money", "shake"]
 PROPS = ["car", "dog", "cash", "box", "jar", "trophy", "tv"]
+LOOKS = ["normal", "gray", "night", "red", "warm", "cold", "dream"]
 
 SYSTEM = f"""You write AND direct viral 35-55 second vertical 3D animated shorts for the channel narravix69,
 in a blocky game-style world. Return ONLY JSON matching this shape:
@@ -32,12 +33,13 @@ in a blocky game-style world. Return ONLY JSON matching this shape:
   "keywords": ["4-8 single words from the script to highlight in the captions"],
   "hud": {{"tag": "short status like ● LIVE or DAY 1", "sub": "short status line, max 18 chars",
            "label": "what the counter measures, max 22 chars"}},
-  "hud_values": ["one counter value per sentence that escalates, e.g. a timer, a day count, money, a percentage"],
+  "hud_values": ["one counter value per sentence that escalates, max 8 characters, written with DIGITS and symbols, e.g. 100%, 75%, DAY 3, $40, 0:30, 2 HRS"],
   "scenes": [{{"sentence": 0, "stage": one of {STAGES},
               "shots": [1-2 camera shots from {SHOTS}],
               "characters": [{{"role": "hero"|"other"|"crowd", "outfit": one of {OUTFITS},
                                "mood": one of {MOODS}, "action": one of {ACTIONS}}}],
               "fx": [0-2 effects from {FX}],
+              "look": one of {LOOKS} (colour grade; "normal" unless the story calls for it),
               "props": [0-2 props from {PROPS}]}}]}}
 
 Story rules:
@@ -47,7 +49,7 @@ Story rules:
 - why_it_sucks: "Why it sucks to be ..." about a relatable modern role or situation (the youngest sibling,
   the new kid, the last one picked, a night-shift worker, the kid whose birthday is on a holiday...), dark-funny.
 - End with a punchline or a question that makes people comment.
-- Write numbers as words. No real people, no brand names, no trademarked game names, no copyrighted characters.
+- Write numbers as words in the script (the voice reads them). Only hud_values use digits. No real people, no brand names, no trademarked game names, no copyrighted characters.
 
 Directing rules (you are the camera operator too):
 - Exactly one scene object per sentence of the script, in order, "sentence" = 0-based index.
@@ -57,6 +59,8 @@ Directing rules (you are the camera operator too):
 - Vary shots: never use the same shot twice in a row.
 - The hero (outfit "hero") appears in every scene. Up to 3 more characters; use "crowd" for groups.
 - Mood and action must match what the sentence says. Use "shake" for impacts and "fx" sparingly.
+- Use "look" to show the story visually: "gray" when colour is gone or for a sad memory, "night" for night-time,
+  "red" for danger or rage, "warm" for happy moments, "cold" for winter or loneliness, "dream" for dreams.
 """
 
 
@@ -116,6 +120,7 @@ def _clean(plan):
         s["characters"] = chars
         s["fx"] = [x for x in (s.get("fx") or []) if x in FX][:2]
         s["props"] = [x for x in (s.get("props") or []) if x in PROPS][:2]
+        s["look"] = _pick(s.get("look"), LOOKS, "normal")
         fixed.append(s)
         last = s
     plan["scenes"] = fixed
@@ -126,7 +131,7 @@ def _clean(plan):
     plan["keywords"] = [str(k) for k in plan.get("keywords", [])][:8]
     hud = plan.get("hud") if isinstance(plan.get("hud"), dict) else {}
     plan["hud"] = {k: str(hud.get(k, ""))[:24] for k in ("tag", "sub", "label")}
-    plan["hud_values"] = [str(v)[:10] for v in plan.get("hud_values", [])][:n]
+    plan["hud_values"] = [str(v).upper()[:9] for v in plan.get("hud_values", [])][:n]
     plan["description"] = str(plan.get("description", ""))[:300]
     return plan
 
