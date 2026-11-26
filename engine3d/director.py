@@ -23,7 +23,7 @@ FPS = 30
 # builder, hero spot, camera box (xmin, xmax, zmin, zmax, ymax) the camera must stay inside
 STAGES = {
     'bedroom':      (lambda sc, t: bedroom(sc, lamp_on=True, lying=False), (0, 0, -1.5), (-7.4, 7.4, -7.4, 7.4, 7.6)),
-    'livingroom':   (lambda sc, t: livingroom(sc, t, mom=False), (0, 0, 0), (-8.4, 8.4, -7.4, 7.4, 7.6)),
+    'livingroom':   (lambda sc, t: livingroom(sc, t, mom=False), (-3, 0, 0), (-8.4, 8.4, -7.4, 7.4, 7.6), 90),
     'school_hall':  (lambda sc, t: school(sc), (0, 0, 0), (-5.4, 5.4, -30, 30, 8.6)),
     'gym':          (lambda sc, t: gym(sc, t), (0, 0, 2), (-14, 14, -12, 12, 9.5)),
     'garage':       (lambda sc, t: garage(sc, t, door=0.0), (0, 0, -1.5), (-6.4, 6.4, -5.4, 5.4, 6.6)),
@@ -43,6 +43,19 @@ STAGES = {
     'void':         (lambda sc, t: void(sc, t), (0, 0, 0), None),
 }
 STAGE_NAMES = list(STAGES)
+
+
+def stage_info(name):
+    e = STAGES[name if name in STAGES else 'city_day']
+    return e[0], e[1], e[2], (e[3] if len(e) > 3 else 0)
+
+
+def _rot_about(p, H, yaw):
+    """Rotate point p around the hero spot H by the stage yaw (degrees)."""
+    if not yaw:
+        return np.array(p, float)
+    a = math.radians(yaw); dx, dz = p[0] - H[0], p[2] - H[2]
+    return np.array([H[0] + math.cos(a) * dx + math.sin(a) * dz, p[1], H[2] - math.sin(a) * dx + math.cos(a) * dz])
 
 # ---------------------------------------------------------------------- characters
 OUTFITS = {
@@ -120,6 +133,8 @@ def put_character(sc, c, pos, yaw, t, lt, k, scale=1.0):
         return
     pz = pose_for(act, t, lt, k)
     p = list(pos)
+    if act == 'sit':
+        chair(sc, (pos[0], pos[1], pos[2]), yaw=yaw)
     if act in ('walk', 'run'):
         sp = 2.6 if act == 'run' else 1.2
         a = math.radians(yaw)
@@ -171,26 +186,28 @@ def apply_fx(sc, fx, center, t):
 PROPS = ['car', 'dog', 'cash', 'box', 'jar', 'phone_big', 'trophy', 'tv']
 
 
-def apply_props(sc, props, H, t):
+def apply_props(sc, props, H, t, syaw=0):
+    def R(x, y, z):
+        return tuple(_rot_about((x, y, z), H, syaw))
     for k, pname in enumerate(props or []):
         side = -1 if k % 2 == 0 else 1
         if pname == 'car':
-            car(sc, (H[0] + side * 6.5, 0, H[2] - 2.5), yaw=90, color=['#c42a2a', '#2a8ad8', '#f2c230'][k % 3])
+            car(sc, R(H[0] + side * 6.5, 0, H[2] - 2.5), yaw=90, color=['#c42a2a', '#2a8ad8', '#f2c230'][k % 3])
         elif pname == 'dog':
-            dog(sc, (H[0] + side * 2.4, 0, H[2] + 1.0), yaw=-side * 30, t=t)
+            dog(sc, R(H[0] + side * 2.4, 0, H[2] + 1.0), yaw=-side * 30, t=t)
         elif pname == 'cash':
-            bills(sc, (H[0] + side * 2.2, 0.05, H[2] + 1.4), n=10)
+            bills(sc, R(H[0] + side * 2.2, 0.05, H[2] + 1.4), n=10)
         elif pname == 'box':
-            pbox_stack(sc, (H[0] + side * 2.6, 0, H[2] + 0.5), 3)
+            pbox_stack(sc, R(H[0] + side * 2.6, 0, H[2] + 0.5), 3)
         elif pname == 'jar':
-            jar(sc, (H[0] + side * 2.0, 2.4, H[2] + 1.0), glow=0.6)
-            sc.add(box((H[0] + side * 2.0, 1.2, H[2] + 1.0), (1.6, 2.4, 1.6), '#7a4a2a', rl=1))
+            jar(sc, R(H[0] + side * 2.0, 2.4, H[2] + 1.0), glow=0.6)
+            sc.add(box(R(H[0] + side * 2.0, 1.2, H[2] + 1.0), (1.6, 2.4, 1.6), '#7a4a2a', rl=1))
         elif pname == 'trophy':
-            sc.add(box((H[0] + side * 2.2, 1.2, H[2] + 1.0), (1.4, 2.4, 1.4), '#f4f4f4', rl=1))
-            sc.add(box((H[0] + side * 2.2, 3.0, H[2] + 1.0), (0.9, 1.2, 0.9), '#f5c542', emit=0.5, rl=4))
+            sc.add(box(R(H[0] + side * 2.2, 1.2, H[2] + 1.0), (1.4, 2.4, 1.4), '#f4f4f4', rl=1))
+            sc.add(box(R(H[0] + side * 2.2, 3.0, H[2] + 1.0), (0.9, 1.2, 0.9), '#f5c542', emit=0.5, rl=4))
         elif pname == 'tv':
-            sc.add(box((H[0] + side * 3.0, 3.2, H[2] - 2.0), (3.6, 2.2, 0.3), '#111', rl=1))
-            sc.add(box((H[0] + side * 3.0, 3.2, H[2] - 1.84), (3.3, 1.9, 0.02), '#6ab8ff', emit=1.4, shade=False))
+            sc.add(box(R(H[0] + side * 3.0, 3.2, H[2] - 2.0), (3.6, 2.2, 0.3), '#111', rl=1))
+            sc.add(box(R(H[0] + side * 3.0, 3.2, H[2] - 1.84), (3.3, 1.9, 0.02), '#6ab8ff', emit=1.4, shade=False))
 
 
 # ------------------------------------------------------------------------- cameras
@@ -235,18 +252,93 @@ def camera(kind, H, lt, dur, seed, bounds, other=None, hero_scale=1.0):
     if kind in ('ots', 'pov') and other is not None:
         ox, oy, oz = other
         if kind == 'ots':  # over the other character's shoulder, looking at the hero
-            return lerp((ox + 2.6, oy + 5.4, oz + 3.6), (ox + 2.3, oy + 5.3, oz + 3.1), p), head, 44, 0
+            return lerp((ox + 3.0, oy + 5.6, oz + 4.4), (ox + 2.7, oy + 5.5, oz + 3.9), p), head, 44, 0
         # pov: from the hero's eyes looking at the other character
         return (hx, hy + 4.7 * s, hz + 0.9 * s) + shake(lt, 0.03, seed=seed), np.array([ox, oy + 4.3, oz]), 64, 0
     return camera('medium', H, lt, dur, seed, bounds, other, hero_scale)
 
 
+# ------------------------------------------------------------------- occlusion
+def _obstacles(boxes):
+    """Inverse transforms + half sizes of set boxes, for camera line-of-sight tests."""
+    if not boxes:
+        return None
+    inv = np.stack([np.linalg.inv(b.M) for b in boxes])
+    half = np.stack([b.size * 0.5 for b in boxes])
+    return inv, half
+
+
+def _first_hit(obs, a, b):
+    """Distance along a->b to the first box hit (slab test in each box's local frame), or None."""
+    if obs is None:
+        return None
+    inv, half = obs
+    d = b - a
+    L = float(np.linalg.norm(d))
+    if L < 1e-6:
+        return None
+    a4 = np.append(a, 1.0)
+    la = np.einsum('nij,j->ni', inv, a4)[:, :3]
+    ld = np.einsum('nij,j->ni', inv[:, :3, :3], d)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        t1 = (-half - la) / ld
+        t2 = (half - la) / ld
+    tmin = np.nanmax(np.minimum(t1, t2), axis=1)
+    tmax = np.nanmin(np.maximum(t1, t2), axis=1)
+    inside = np.all(np.abs(la) <= half, axis=1)
+    hit = (tmax >= np.maximum(tmin, 0)) & (tmin <= 0.97) & ~inside
+    hit |= inside
+    if not hit.any():
+        return None
+    t = np.where(inside, 0.0, np.maximum(tmin, 0))[hit].min()
+    return float(t) * L
+
+
+def unblock(cam, target, obs, bounds):
+    """If set geometry blocks the view, try the mirrored side of the hero, else move in front of the blocker."""
+    cam = np.array(cam, float); target = np.array(target, float)
+    dist = np.linalg.norm(cam - target)
+    if _first_hit(obs, cam, target) is None:
+        return cam
+    off = cam - target
+    for m in ((1, 1, -1), (-1, 1, 1), (-1, 1, -1)):
+        c2 = clamp_cam(target + off * np.array(m), bounds)
+        if np.linalg.norm(c2 - target) > 0.6 * dist and _first_hit(obs, c2, target) is None:
+            return c2
+    c = cam
+    for _ in range(4):
+        h = _first_hit(obs, c, target)
+        if h is None:
+            break
+        dvec = (target - c) / max(np.linalg.norm(target - c), 1e-6)
+        c = c + dvec * (h + 0.5)
+        if np.linalg.norm(target - c) < 2.2:
+            c = target - dvec * 2.2
+            break
+    return c
+
+
+LOOKS = {  # colour grade per sentence (post-process)
+    'normal': {},
+    'gray': dict(sat=0.0, con=0.1),
+    'night': dict(dark=0.3, tint=[0.55, 0.65, 1.0], tint_a=0.25, sat=0.9),
+    'red': dict(tint=[1.0, 0.25, 0.2], tint_a=0.3, vig=0.6),
+    'warm': dict(tint=[1.0, 0.75, 0.45], tint_a=0.15, sat=1.25),
+    'cold': dict(tint=[0.55, 0.8, 1.0], tint_a=0.2, sat=0.85),
+    'dream': dict(bloom=1.4, sat=0.8, tint=[1.0, 0.85, 1.0], tint_a=0.15),
+}
+
+
 # --------------------------------------------------------------------------- frames
 def build_frame(shot, lt, gt):
     st_name = shot['stage'] if shot['stage'] in STAGES else 'city_day'
-    builder, H, bounds = STAGES[st_name]
+    builder, H, bounds, syaw = stage_info(st_name)
     sc = engine.Scene()
     builder(sc, gt)
+    obs = _obstacles([b for b in sc.boxes if not (b.size[1] < 0.3 and b.M[1, 3] < 0.4)]) if bounds else None
+    if st_name in ('void', 'red_room'):  # these sets are moody; keep the hero readable
+        sc.ambient = np.maximum(np.array(sc.ambient, float), 0.22)
+        sc.lights.append(dict(pos=(H[0] + 2.5, H[1] + 7, H[2] + 5), col='#ffffff', I=2.2, r=12))
     scale = float(shot.get('hero_scale', 1.0) or 1.0)
     chars = shot.get('characters') or [{'role': 'hero', 'outfit': 'hero', 'action': 'idle', 'mood': 'neutral'}]
     kind = shot['shot']
@@ -255,32 +347,39 @@ def build_frame(shot, lt, gt):
     other_pos = None
     face_pair = kind in ('ots', 'pov') and others
     if face_pair:
-        other_pos = (H[0] + 0.9, H[1], H[2] + 4.6 * max(1.0, scale * 0.8))
+        other_pos = tuple(_rot_about((H[0] + 0.9, H[1], H[2] + 4.6 * max(1.0, scale * 0.8)), H, syaw))
         others = [dict(others[0], action='talk' if others[0].get('action') in ('float', 'jump', 'run', 'walk', 'fall', 'lie') else others[0].get('action'))] + others[1:]
     k = 0
     if hero is not None and not (kind == 'pov'):
-        put_character(sc, hero, H, 0 if not face_pair else 0, gt, lt, 0, scale)
+        put_character(sc, hero, H, syaw, gt, lt, 0, scale)
     spots = [(-3.4, 0.6), (3.4, 0.6), (-6.2, -1.6), (6.2, -1.6), (-1.8, -3.6), (1.8, -3.6), (-8, -3), (8, -3)]
     for j, c in enumerate(others[:8]):
         if face_pair and j == 0:
             pos = other_pos
-            yaw = 180 + math.degrees(math.atan2(H[0] - pos[0], H[2] - pos[2])) - 180
+            yaw = math.degrees(math.atan2(H[0] - pos[0], H[2] - pos[2]))
         else:
             dx, dz = spots[j % len(spots)]
-            pos = (H[0] + dx, H[1], H[2] + dz)
-            yaw = math.degrees(math.atan2(H[0] - pos[0], (H[2] + 3) - pos[2]))
+            pos = tuple(_rot_about((H[0] + dx, H[1], H[2] + dz), H, syaw))
+            look = _rot_about((H[0], 0, H[2] + 3), H, syaw)
+            yaw = math.degrees(math.atan2(look[0] - pos[0], look[2] - pos[2]))
         put_character(sc, c, pos, yaw, gt, lt, j + 1)
         k += 1
-    apply_props(sc, shot.get('props'), H, gt)
+    apply_props(sc, shot.get('props'), H, gt, syaw)
     apply_fx(sc, shot.get('fx'), H, gt)
     act = (hero or {}).get('action', 'idle')
-    yo = {'float': 2.2 + 0.4 * math.sin(gt * 1.8), 'jump': 1.0, 'fall': -3.4, 'lie': -3.6, 'sit': -1.2}.get(act, 0.0)
+    yo = {'float': 2.2 + 0.4 * math.sin(gt * 1.8), 'jump': 1.0, 'fall': -3.4, 'lie': -3.6, 'sit': -0.6}.get(act, 0.0)
     camH = (H[0], H[1] + yo * scale, H[2])
+    if act == 'sit' and kind in ('close', 'low', 'dutch', 'track'):
+        kind = 'medium' if kind != 'low' else 'wide'
     if act in ('fall', 'lie') and kind in ('close', 'low', 'dutch', 'track', 'medium'):
         kind = 'drone' if kind in ('close', 'medium') else 'wide'
         camH = (H[0], H[1] - 1.0, H[2])
-    cam_pos, target, fov, roll = camera(kind, camH, lt, shot['dur'], shot['seed'], bounds, other_pos, scale)
-    cam_pos = clamp_cam(np.array(cam_pos, float), bounds)
+    local_other = tuple(_rot_about(other_pos, H, -syaw)) if other_pos is not None else None
+    cam_pos, target, fov, roll = camera(kind, camH, lt, shot['dur'], shot['seed'], None, local_other, scale)
+    cam_pos = clamp_cam(_rot_about(cam_pos, H, syaw), bounds)
+    target = _rot_about(np.array(target, float), H, syaw)
+    if obs is not None and kind != 'pov':
+        cam_pos = unblock(cam_pos, target, obs, bounds)
     if 'shake' in (shot.get('fx') or []):
         cam_pos = cam_pos + shake(lt, 0.09, seed=shot['seed'])
     # living handheld drift
@@ -361,6 +460,7 @@ def export_all(plan, words, duration, outdir, seed=1, hud=None, end_text='FOLLOW
                         grain=0.025, sat=1.18, dark=0.0, bloom=0.75)
             if shot['stage'] in ('red_room', 'void'):
                 post['vig'] = 0.55
+            post.update(LOOKS.get(shot.get('look') or 'normal', {}))
             meta['post'] = post
             txt, age, key = caption_at(words, gt, keys)
             if txt:
