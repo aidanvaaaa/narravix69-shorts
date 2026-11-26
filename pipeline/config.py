@@ -11,7 +11,7 @@ W, H, FPS = 1080, 1920, 30
 
 
 def env(name, default=""):
-    v = os.environ.get(name, "")
+    v = os.environ.get(name, "").strip()
     return v if v.strip() else default
 
 
@@ -35,3 +35,5 @@ TIKTOK_CLIENT_SECRET = env("TIKTOK_CLIENT_SECRET")
 TIKTOK_REFRESH_TOKEN = env("TIKTOK_REFRESH_TOKEN")
 
 NOTIFY_WEBHOOK = env("NOTIFY_WEBHOOK")
+if NOTIFY_WEBHOOK and not NOTIFY_WEBHOOK.startswith("http"):
+    NOTIFY_WEBHOOK = "https://" + NOTIFY_WEBHOOK.lstrip("/")
