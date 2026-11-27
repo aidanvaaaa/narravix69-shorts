@@ -19,8 +19,7 @@ def render_video(plan, words, duration, out_mp4, seed=0, progress=print, workdir
     from engine3d import director  # imported late so TEX_DIR is set first
     director.engine.TEXDIR = str(work / "tex")
 
-    hud = plan.get("hud") or {}
-    hud = dict(hud, col="#ff4a3a") if plan.get("hud_values") else None
+    hud = None  # no corner overlays
     progress("exporting 3D shots")
     names, shots = director.export_all(plan, words, duration, str(work / "data"), seed=seed, hud=hud,
                                        title_lines=plan.get("title_lines"), end_text="FOLLOW FOR MORE")
