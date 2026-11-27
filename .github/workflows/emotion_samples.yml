@@ -6,6 +6,9 @@ on:
       mode:
         description: "make = 5 styles, british = smoother British versions"
         default: "british"
+      text:
+        description: "text to read in story mode"
+        default: ""
 
 jobs:
   voices:
@@ -28,6 +31,8 @@ jobs:
           pip install --quiet -r requirements.txt
           python -m pipeline.emotion_samples refs
       - name: Chatterbox samples
+        env:
+          STORY_TEXT: ${{ inputs.text }}
         run: |
           pip install --quiet chatterbox-tts
           python -m pipeline.emotion_samples ${{ inputs.mode || 'make' }}
