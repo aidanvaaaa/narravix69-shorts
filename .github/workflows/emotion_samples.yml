@@ -2,6 +2,10 @@ name: Emotional voice samples
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "make = 5 styles, british = smoother British versions"
+        default: "british"
 
 jobs:
   voices:
@@ -26,7 +30,7 @@ jobs:
       - name: Chatterbox samples
         run: |
           pip install --quiet chatterbox-tts
-          python -m pipeline.emotion_samples make
+          python -m pipeline.emotion_samples ${{ inputs.mode || 'make' }}
       - uses: actions/upload-artifact@v4
         with:
           name: emotion-samples
