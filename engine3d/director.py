@@ -77,18 +77,39 @@ CROWD_SHIRTS = ['#ff5a8a', '#5ac8ff', '#ffd24a', '#8aff6a', '#c08aff', '#ff9a3a'
 GOLDC = '#e2b23c'
 
 
+_PEND = {}
+def pendant_img():
+    """Iced name plate: 'NARRAVIX69' in bright diamond-white letters on a dark plate."""
+    if 'i' not in _PEND:
+        from PIL import Image, ImageDraw
+        W, H = 640, 200
+        im = Image.new('RGBA', (W, H), (18, 20, 28, 255)); d = ImageDraw.Draw(im)
+        d.rounded_rectangle((6, 6, W - 7, H - 7), 26, outline=(235, 242, 255, 255), width=10)
+        f = engine.font(118, engine.FONT_ANTON); txt = 'NARRAVIX69'
+        tw = d.textlength(txt, font=f)
+        d.text(((W - tw) / 2, (H - 150) / 2), txt, font=f, fill=(245, 250, 255, 255))
+        _PEND['i'] = im
+    return _PEND['i']
+
+
 def drip(out, base, hm, arms):
-    """Hero jewellery: three gold chains (short, medium, long with a diamond pendant), iced watches, diamond studs."""
+    """Hero jewellery: two slim diamond chains, the longer one with a NARRAVIX69 iced pendant; iced watches, studs."""
     t = engine.TIME[0]
-    for i, (depth, w) in enumerate(((0.45, 0.48), (0.8, 0.6), (1.15, 0.7))):
-        n = 13 + i * 2
+    for i, (depth, w) in enumerate(((0.5, 0.5), (0.95, 0.62))):
+        n = 26 + i * 5
         for k in range(n):
             u = -1 + 2 * k / (n - 1)
             x = u * w; y = 3.97 - (1 - u * u) * depth
             ang = math.degrees(math.atan2(2 * u * depth, 1)) * 0.55
-            out.append(box((x, y, 0.55 + 0.012 * i), (0.12, 0.09, 0.08), GOLDC, parent=base, rl=2, emit=0.12, R=rot(0, 0, ang)))
-    out.append(box((0, 2.75, 0.6), (0.36, 0.4, 0.08), GOLDC, parent=base, rl=2, emit=0.15))
-    out.append(box((0, 2.75, 0.65), (0.2, 0.2, 0.04), '#ffffff', parent=base, R=rot(0, 0, 45), emit=1.6 + 0.8 * math.sin(t * 7), shade=False))
+            tw = 0.35 + 0.9 * max(0.0, math.sin(t * 8 + k * 1.3 + i * 2.1)) ** 6
+            out.append(box((x, y, 0.55 + 0.012 * i), (0.055, 0.055, 0.045), '#eef4ff', parent=base, rl=2, emit=tw,
+                           R=rot(0, 0, 45 + ang), nocast=True))
+    py = 3.97 - 0.95 - 0.2
+    pl = box((0, py, 0.6), (1.0, 0.32, 0.06), '#12141c', parent=base, rl=2, emit=0.05)
+    img = pendant_img()
+    pl.tex['pz'] = (img, True)
+    out.append(pl)
+    out.append(box((0, py + 0.2, 0.6), (0.1, 0.1, 0.06), '#eef4ff', parent=base, emit=0.9, nocast=True))
     for key in ('la', 'ra'):
         el = arms[key]
         out.append(box((0, -0.58, 0), (0.98, 0.22, 0.98), '#e9eef6', parent=el, rl=4, emit=0.5))
@@ -302,12 +323,12 @@ def camera(kind, H, lt, dur, seed, bounds, other=None, hero_scale=1.0):
     if kind == 'low':
         return lerp((hx + side * 1.6 * s, hy + 0.9, hz + 5.8 * s), (hx + side * 1.2 * s, hy + 0.8, hz + 5.0 * s), p), head + (0, 0.4 * s, 0), 60, side * 4
     if kind == 'ecu':  # extreme close-up: the face fills the frame
-        d = lerp(3.4 * s, 2.9 * s, p)
-        return (hx + side * 0.25 * s, hy + 4.75 * s, hz + d), head + (0, 0.05 * s, 0), 30, 0
+        d = lerp(4.7 * s, 4.0 * s, p)
+        return (hx + side * 1.0 * s, hy + 4.7 * s, hz + d), head + (0, -0.15 * s, 0), 36, 0
     if kind == 'detail':  # drip shot: chains and watch, slow orbit
         ang = math.radians(side * (25 - 30 * p))
-        d = 3.6 * s
-        return (hx + math.sin(ang) * d, hy + 3.3 * s, hz + math.cos(ang) * d), np.array([hx, hy + 3.0 * s, hz]), 34, side * 3
+        d = 4.2 * s
+        return (hx + math.sin(ang) * d, hy + 3.4 * s, hz + math.cos(ang) * d), np.array([hx, hy + 3.15 * s, hz]), 34, side * 3
     if kind == 'dutch':
         return lerp((hx - side * 2.2 * s, hy + 3.6 * s, hz + 6.4 * s), (hx - side * 1.8 * s, hy + 3.8 * s, hz + 5.6 * s), p), head, 48, side * (14 + 4 * p)
     if kind == 'drone':
@@ -535,7 +556,7 @@ def export_all(plan, words, duration, outdir, seed=1, hud=None, end_text='FOLLOW
             meta['post'] = post
             txt, age, key = caption_at(words, gt, keys)
             if txt:
-                meta['cap'] = dict(t=txt.upper() if key else txt, col=[255, 140, 30] if key else [255, 216, 74],
+                meta['cap'] = dict(t=txt.upper() if key else txt, col=[255, 255, 255],
                                    pop=1.0 + (0.55 if key else 0.3) * math.exp(-age * 16), st=1)
             if hud:
                 v = hud_vals[min(shot['sentence'], len(hud_vals) - 1)] if hud_vals else ''
@@ -545,8 +566,8 @@ def export_all(plan, words, duration, outdir, seed=1, hud=None, end_text='FOLLOW
                                    pulse=max(0.0, 1 - (lt / 0.4)) if v != prev and lt < 0.4 else 0.0)
             if title_lines and gt < 2.2:
                 meta['title'] = dict(lines=title_lines, a=min(1.0, gt / 0.2) * min(1.0, (2.2 - gt) / 0.25), hl='#ffd84a')
-            if duration - gt < 1.9 and end_text:
-                meta['end'] = dict(text=end_text, a=min(1.0, (1.9 - (duration - gt)) / 0.3))
+            if duration - gt < 2.0 and end_text:
+                meta['end'] = dict(text=end_text, a=min(1.0, (2.0 - (duration - gt)) / 0.35), t=2.0 - (duration - gt))
             frames.append(meta); blobs.append(arr)
         name = f's{i:03d}'
         np.concatenate([b.reshape(-1) for b in blobs]).astype(np.float32).tofile(os.path.join(outdir, name + '.bin'))

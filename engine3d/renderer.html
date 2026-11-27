@@ -367,7 +367,9 @@ function renderFrame(fi) {
   if (fr.crack) drawCrack(fr.crack);
   if (fr.hud) drawHud(fr.hud);
   if (fr.title) drawTitle(fr.title);
-  if (fr.cap) drawCaption(fr.cap);
+  const endA = fr.end ? Math.min(1, fr.end.a) : 0;
+  if (fr.cap && endA < 0.6) drawCaption(fr.cap);
+  if (endA < 1) drawHandle(1 - endA);
   if (fr.end) drawEnd(fr.end);
   ctx.restore();
   return out.toDataURL('image/jpeg', 0.96);
@@ -419,29 +421,25 @@ function drawCrack(ck) {
   ctx.restore();
 }
 function drawCaption(cp) {
-  if (cp.st === 1) {
-    let sz = Math.round(70 * cp.pop);
-    ctx.font = `${sz}px PoppinsB`;
-    let tw = ctx.measureText(cp.t).width;
-    if (tw > LW - 80) { sz = Math.floor(sz * (LW - 80) / tw); ctx.font = `${sz}px PoppinsB`; }
-    const x = LW / 2, y = LH * 0.66;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 5;
-    ctx.lineWidth = sz * 0.2; ctx.strokeStyle = '#2a1a10'; ctx.strokeText(cp.t, x, y); ctx.restore();
-    ctx.lineWidth = sz * 0.14; ctx.strokeStyle = '#2a1a10'; ctx.strokeText(cp.t, x, y);
-    ctx.fillStyle = `rgb(${cp.col[0]},${cp.col[1]},${cp.col[2]})`; ctx.fillText(cp.t, x, y);
-    return;
-  }
-  let sz = Math.round(66 * cp.pop);
-  ctx.font = `${sz}px Anton`;
+  // clean white word captions: bold sans, thin dark outline, soft drop shadow, small pop on each word
+  let sz = Math.round(64 * cp.pop);
+  ctx.font = `${sz}px PoppinsB`;
   let tw = ctx.measureText(cp.t).width;
-  if (tw > LW - 70) { sz = Math.floor(sz * (LW - 70) / tw); ctx.font = `${sz}px Anton`; tw = ctx.measureText(cp.t).width; }
-  const x = LW / 2, y = LH * 0.6;
+  if (tw > LW - 90) { sz = Math.floor(sz * (LW - 90) / tw); ctx.font = `${sz}px PoppinsB`; }
+  const x = LW / 2, y = LH * 0.77;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 14; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 6;
-  ctx.lineWidth = Math.max(6, sz * 0.16); ctx.strokeStyle = '#000'; ctx.strokeText(cp.t, x, y); ctx.restore();
-  ctx.lineWidth = Math.max(5, sz * 0.13); ctx.strokeStyle = '#000'; ctx.strokeText(cp.t, x, y);
-  ctx.fillStyle = `rgb(${cp.col[0]},${cp.col[1]},${cp.col[2]})`; ctx.fillText(cp.t, x, y);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+  ctx.lineWidth = Math.max(4, sz * 0.11); ctx.strokeStyle = 'rgba(8,8,12,0.92)'; ctx.strokeText(cp.t, x, y); ctx.restore();
+  ctx.lineWidth = Math.max(3, sz * 0.085); ctx.strokeStyle = 'rgba(8,8,12,0.95)'; ctx.strokeText(cp.t, x, y);
+  ctx.fillStyle = '#ffffff'; ctx.fillText(cp.t, x, y);
+}
+function drawHandle(a) {
+  ctx.save(); ctx.globalAlpha = 0.82 * a; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.font = '22px PoppinsB'; ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+  ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.strokeText('narravix69', LW - 22, LH - 26);
+  ctx.shadowColor = 'transparent'; ctx.fillStyle = '#ffffff'; ctx.fillText('narravix69', LW - 22, LH - 26);
+  ctx.restore();
 }
 function strokeFill(t, x, y, sz, fill, font, lw) {
   ctx.font = `${sz}px ${font}`; ctx.lineJoin = 'round';
@@ -467,9 +465,33 @@ function drawTitle(tt) {
   ctx.restore();
 }
 function drawEnd(e) {
-  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const a = Math.min(1, e.a); ctx.globalAlpha = a; const s = 0.85 + 0.15 * a;
-  strokeFill(e.text, LW / 2, LH * 0.84, Math.round(40 * s), e.col || '#ffd84a', 'PoppinsB', 0.18);
+  // full end card: darkened, tinted backdrop, brand line, big call to action, handle pill
+  const a = Math.max(0, Math.min(1, e.a)), t = e.t || 1;
+  const ez = x => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
+  ctx.save();
+  ctx.globalAlpha = 0.86 * a;
+  const g = ctx.createLinearGradient(0, 0, 0, LH); g.addColorStop(0, '#07080d'); g.addColorStop(0.5, '#10131c'); g.addColorStop(1, '#05060a');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, LW, LH);
+  ctx.globalAlpha = a;
+  const cx = LW / 2, cy = LH * 0.47;
+  const r1 = ez((t - 0.1) / 0.45), r2 = ez((t - 0.3) / 0.45), r3 = ez((t - 0.5) / 0.45);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  // small brand line
+  ctx.globalAlpha = a * r1; ctx.font = '24px PoppinsB'; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.letterSpacing = '6px'; ctx.fillText('NARRAVIX69', cx, cy - 120 + (1 - r1) * 20); ctx.letterSpacing = '0px';
+  // call to action, split onto two lines if long
+  const words = (e.text || 'FOLLOW FOR MORE').toUpperCase().split(' ');
+  const l1 = words.slice(0, 1).join(' '), l2 = words.slice(1).join(' ');
+  ctx.globalAlpha = a * r2; const s2 = 0.9 + 0.1 * r2;
+  ctx.font = `${Math.round(96 * s2)}px Anton`; ctx.fillStyle = '#ffffff'; ctx.fillText(l1, cx, cy - 30);
+  if (l2) { ctx.font = `${Math.round(68 * s2)}px Anton`; ctx.fillStyle = '#ffffff'; ctx.fillText(l2, cx, cy + 50); }
+  // accent bar
+  const bw = 220 * r2; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(cx - bw / 2, cy + 102, bw, 5, 3); ctx.fill();
+  // handle pill
+  ctx.globalAlpha = a * r3; const py = cy + 175 + (1 - r3) * 18;
+  ctx.font = '30px PoppinsB'; const hw = ctx.measureText('@narravix69').width + 64;
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(cx - hw / 2, py - 32, hw, 64, 32); ctx.fill();
+  ctx.fillStyle = '#0b0d14'; ctx.fillText('@narravix69', cx, py + 1);
   ctx.restore();
 }
 window.ready = (async () => { const f = new FontFace('Anton', 'url(/font/Anton.ttf)'); await f.load(); document.fonts.add(f); const g = new FontFace('PoppinsB', 'url(/font2/Poppins-Bold.ttf)'); await g.load(); document.fonts.add(g); return true; })();
