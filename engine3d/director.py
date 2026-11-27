@@ -428,7 +428,7 @@ def build_frame(shot, lt, gt):
     st_name = shot['stage'] if shot['stage'] in STAGES else 'city_day'
     builder, H, bounds, syaw = stage_info(st_name)
     sc = engine.Scene()
-    wsets.LT[0] = lt
+    wsets.LT[0] = shot.get('st_off', 0.0) + lt  # big events keep moving forward across shots, never restart
     builder(sc, gt)
     decorate(sc, st_name, gt)
     obs = _obstacles([b for b in sc.boxes if not (b.size[1] < 0.3 and b.M[1, 3] < 0.4)]) if bounds else None
@@ -522,7 +522,7 @@ def plan_shots(plan, words, duration, seed=1):
         seg = (en - st) / pieces
         for j in range(pieces):
             kind = wanted[j % len(wanted)]
-            if kind == last:  # never repeat the same framing back to back
+            if kind == last and kind != 'event':  # never repeat the same framing back to back (event shots vary their angle)
                 kind = rr.choice([s for s in ('medium', 'close', 'low', 'wide', 'dutch') if s != last])
             if k == 0 and j == 0:
                 kind = wanted[0] if wanted[0] in ('close', 'low', 'dutch', 'pov') else 'close'
@@ -552,6 +552,10 @@ def export_all(plan, words, duration, outdir, seed=1, hud=None, end_text='FOLLOW
     keys = {re.sub(r'[^a-z0-9]', '', k.lower()) for k in plan.get('keywords', [])}
     hud_vals = plan.get('hud_values') or []
     names = []
+    stage_time = {}
+    for shot in shots:
+        shot['st_off'] = stage_time.get(shot['stage'], 0.0)
+        stage_time[shot['stage']] = shot['st_off'] + shot['dur']
     for i, shot in enumerate(shots):
         f0 = round(shot['start'] * FPS)
         f1 = round((shots[i + 1]['start'] if i + 1 < len(shots) else duration) * FPS)

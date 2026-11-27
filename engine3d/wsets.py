@@ -315,10 +315,10 @@ def st_tsunami_city(sc, t):
     sc.sky = (C('#3a4658'), C('#8a96a6')); sc.fog = C((0.5, 0.56, 0.64)); sc.fogd = 0.006
     sc.suncol = C((0.4, 0.42, 0.45)); sc.ambient = C((0.5, 0.52, 0.58))
     lt = LT[0]
-    wave_wall(sc, -95 + lt * 14, t=t)
+    wave_wall(sc, -95 + min(lt, 4.5) * 14, t=t)
     for x in np.arange(-60, 60, 6):  # rushing water in front of the wave
         for k in range(3):
-            z = -60 + lt * 14 + k * 6
+            z = -60 + min(lt, 4.5) * 14 + k * 6
             sc.add(box((x, 0.4 + math.sin(t * 4 + x) * 0.3, z), (6.1, 1.0, 6.1), '#2a6a90', nocast=True))
 
 
@@ -570,7 +570,7 @@ def st_ocean_impact(sc, t):
     sc.sky = (C('#2a3a5a'), C('#d88a5a')); sc.fog = C((0.6, 0.5, 0.45)); sc.fogd = 0.004
     sc.ambient = C((0.5, 0.45, 0.45)); sc.suncol = C((0.9, 0.6, 0.4)); sc.shadow = False
     lt = LT[0]
-    rr0 = 10 + lt * 26
+    rr0 = 10 + min(lt, 7.0) * 26
     c = np.array((0, 0, -140))
     for x in np.arange(-120, 121, 8):
         for z in np.arange(-260, 21, 8):
@@ -647,6 +647,37 @@ def _orbit(target, dist, h, lt, dur, seed, fov=50, sweep=14):
 
 
 def event_camera(stage, kind, lt, dur, seed):
+    """Frames the spectacle from one of three angles (picked per shot) so no two shots look the same."""
+    ev = _event_camera(stage, kind, lt, dur, seed)
+    if ev is None:
+        return None
+    pos, target, fov, roll = np.array(ev[0], float), np.array(ev[1], float), ev[2], ev[3]
+    v = (seed // 7) % 3
+    street = stage in ('meteor_city', 'tsunami_city', 'flood_city', 'ash_city', 'frozen_city', 'ring_sky', 'blackout_city')
+    if v and street:  # buildings line the street: vary height and distance, never swing sideways into a wall
+        if v == 1:
+            pos = np.array([3.8 if seed % 2 else -3.8, 1.3, pos[2] + 3.0]); fov = fov + 4
+        else:
+            pos = np.array([0.0, pos[1] + 12.0, pos[2] + 6.0]); fov = fov - 4
+        return pos, target, fov, roll
+    if v:
+        off = pos - target
+        ang = math.radians(32 if v == 1 else -28)
+        c, s_ = math.cos(ang), math.sin(ang)
+        off = np.array([off[0] * c + off[2] * s_, off[1], -off[0] * s_ + off[2] * c])
+        if v == 1:
+            off = off * 0.72 + np.array([0, abs(off[1]) * 0.15 + 2.0, 0])   # closer, a little higher
+            roll = roll + 4
+        else:
+            off = off * 1.12; off[1] = off[1] * 0.4                          # wider and lower
+            fov = fov + 4
+        pos = target + off
+        if stage not in ('space', 'moon_breaks', 'earth_ring', 'black_hole', 'sun_dark', 'asteroid', 'earth_core'):
+            pos[1] = max(pos[1], 1.2)
+    return pos, target, fov, roll
+
+
+def _event_camera(stage, kind, lt, dur, seed):
     """Frames the spectacle of a world stage, or None to use the normal hero camera."""
     p = _ease(lt / max(dur, 0.01))
     if stage in ('space', 'earth_ring', 'sun_dark', 'asteroid'):
