@@ -112,8 +112,10 @@ Story rules:
 - Follow the topic brief you are given: use its hook (you may sharpen it) and its beats, in order, as a ticking
   timeline (seconds -> minutes -> days -> years, or a depth / distance counting down). Keep the science accurate
   and explain cause and effect clearly so every sentence makes sense to a 13-year-old. One clear idea per sentence.
-- The LAST sentence is a complete, satisfying payoff: a twist, a "here is the good news" moment, or a shocking final fact.
-  NEVER "part 2", "to be continued", "like for the rest", "it's just the beginning" or any cliffhanger.
+- END ON A CLIFFHANGER: the LAST sentence leaves the viewer desperate to know what happens next. Build to the
+  biggest moment, then cut right before the answer: a new threat appears, a shocking reveal, or a question left
+  hanging ("But that's not even the worst part.", "And then the ground starts shaking."). Do NOT resolve it and
+  do NOT say "follow" or "part 2" in the script; the end screen says that.
 - Write numbers as words in the script (the voice reads them). Only stamps use digits. No real people, no brand names, no trademarked game names, no copyrighted characters.
 
 Directing rules (you are the camera operator too):
@@ -263,7 +265,7 @@ def write_plan(used_topics, fmt=None):
     else:
         recent = "\n".join(f"- {x}" for x in used_topics[-200:])
         prompt = ("Pick a fresh science / space / nature-disaster \"what if\" topic in the same style as these "
-                  f"(a shocking number in the hook, a ticking timeline, a twist at the end). Do NOT repeat any of these:\n{recent}\n"
+                  f"(a shocking number in the hook, a ticking timeline, a cliffhanger at the end). Do NOT repeat any of these:\n{recent}\n"
                   "Write the video now.")
     err = None
     for _ in range(3):
