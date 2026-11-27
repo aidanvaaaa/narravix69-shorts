@@ -416,6 +416,21 @@ def character(sc, pos, yaw=0, pose=None, skin='#8a3ff0', shirt='#8c8c94', pants=
         out.append(box((0.42, 1.12, 0.74), (0.3, 0.2, 0.03), '#d8d8d8', parent=hm))
         if hair == 'beanie_beard':
             out.append(box((0, 0.06, 0.6), (1.0, 0.26, 0.2), '#a8a8b0', parent=hm, rl=2))
+    elif hair == 'mullet':
+        # modern mullet: textured volume on top, fringe falling forward, tight faded sides, longer flowing back
+        out.append(box((0, 1.4, -0.04), (1.42, 0.4, 1.38), hc, parent=hm, rl=3))
+        for k, (dx, dz, h) in enumerate(((-0.4, 0.3, 0.2), (0.05, 0.38, 0.26), (0.42, 0.25, 0.18), (-0.25, -0.2, 0.22), (0.3, -0.25, 0.2), (0.0, -0.05, 0.28))):
+            out.append(box((dx, 1.6 + h * 0.3, dz), (0.46, h + 0.12, 0.46), hc, R=rot(k * 23, 8 * ((k % 2) * 2 - 1), 6), parent=hm, rl=3))
+        for k, (dx, rz) in enumerate(((-0.38, 10), (0.0, -4), (0.36, -12))):
+            out.append(box((dx, 1.16, 0.63), (0.4, 0.42 - 0.05 * (k == 1), 0.16), hc, R=rot(0, -14, rz), parent=hm, rl=2))
+        fade = hc * 0.55 + C(skin) * 0.45
+        for sx in (-1, 1):
+            out.append(box((sx * 0.67, 1.12, -0.05), (0.04, 0.34, 1.12), hc, parent=hm, rl=1))
+            out.append(box((sx * 0.665, 0.82, -0.12), (0.03, 0.3, 0.9), fade, parent=hm, rl=1))
+        out.append(box((0, 0.85, -0.67), (1.38, 1.05, 0.24), hc, parent=hm, rl=2))
+        out.append(box((0, 0.1, -0.72), (1.18, 0.7, 0.22), hc, R=rot(0, 8, 0), parent=hm, rl=3))
+        for k, dx in enumerate((-0.42, -0.12, 0.16, 0.44)):
+            out.append(box((dx, -0.28 - 0.06 * (k % 2), -0.8), (0.3, 0.32, 0.18), hc, R=rot(0, 22, (dx * 40)), parent=hm, rl=3))
     elif hair == 'short':
         out.append(box((0, 1.33, -0.05), (1.42, 0.35, 1.42), hc, parent=hm, rl=2))
         out.append(box((0, 0.95, -0.6), (1.4, 0.7, 0.25), hc, parent=hm, rl=2))
