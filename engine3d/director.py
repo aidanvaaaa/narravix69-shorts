@@ -60,7 +60,7 @@ def _rot_about(p, H, yaw):
 
 # ---------------------------------------------------------------------- characters
 OUTFITS = {
-    'hero':     dict(design='hoodie', skin='#f0c8a0', arms='#141418', shirt='#141418', pants='#0f0f12', cuff='#f0c8a0', hair='mullet', haircol='#16120f', shoes='#f6f6f6', slit=True),
+    'hero':     dict(design='hoodie', skin='#f0c8a0', arms='#141418', shirt='#141418', pants='#0f0f12', cuff='#f0c8a0', hair='taper', haircol='#16120f', shoes='#f6f6f6', slit=True),
     'friend':   dict(design='tee_logo', skin='#c98a5a', arms='#ff7a3a', shirt='#ff7a3a', pants='#24242e', cuff='#c98a5a', hair='curly', haircol='#1a1210', shoes='#ffd24a'),
     'girl':     dict(design='tee', skin='#f0c8a0', shirt='#ff6ab0', pants='#2a2a3a', cuff='#f0c8a0', hair='long', haircol='#3a2010', skirt='#7a5aff', shoes='#ffffff'),
     'villain':  dict(design='torn', skin='#a8b0b8', arms='#2a2a30', shirt='#2a2a30', pants='#141418', cuff='#a8b0b8', hair='bandana', haircol='#c42a2a', shoes='#111111'),
