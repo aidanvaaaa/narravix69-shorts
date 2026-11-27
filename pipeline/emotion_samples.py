@@ -69,5 +69,81 @@ def make():
         print("made", label, flush=True)
 
 
+def _trim(w, sr, thr=0.012, keep=0.04):
+    """Cut silence at both ends of a clip (keeps a few ms so words aren't clipped)."""
+    import torch
+    a = w.abs().squeeze(0)
+    idx = torch.nonzero(a > thr).squeeze(-1)
+    if len(idx) == 0:
+        return w
+    k = int(sr * keep)
+    return w[:, max(0, int(idx[0]) - k): min(w.shape[1], int(idx[-1]) + k)]
+
+
+def _join(parts, sr, pauses):
+    """Join chunks with short natural pauses and 30 ms crossfades (no hard cuts)."""
+    import torch
+    out = parts[0]
+    fade = int(sr * 0.03)
+    for p, gap in zip(parts[1:], pauses):
+        out = torch.cat([out, torch.zeros(1, int(sr * gap))], dim=1)
+        ramp = torch.linspace(0, 1, fade).unsqueeze(0)
+        p = p.clone(); p[:, :fade] *= ramp
+        out = torch.cat([out, p], dim=1)
+    return out
+
+
+def _chunks(text, max_chars=230):
+    """2-3 sentences per chunk so the intonation flows across sentences."""
+    sents = [s for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+    out, cur = [], ""
+    for s in sents:
+        if cur and len(cur) + len(s) > max_chars:
+            out.append(cur); cur = s
+        else:
+            cur = (cur + " " + s).strip()
+    if cur:
+        out.append(cur)
+    return out
+
+
+POLISH = "highpass=f=70,equalizer=f=180:t=q:w=1:g=2,equalizer=f=6500:t=q:w=1.5:g=-2,acompressor=threshold=-20dB:ratio=2.5:attack=15:release=200,aecho=0.85:0.4:28:0.12,loudnorm=I=-16:TP=-1.5"
+
+
+def british():
+    """Smoother British documentary narration: natural reference, sentence groups, soft pauses, warm polish."""
+    import torch
+    import torchaudio as ta
+    from chatterbox.tts import ChatterboxTTS
+    torch.set_num_threads(4)
+    model = ChatterboxTTS.from_pretrained(device="cpu")
+    sr = model.sr
+    # 1) a natural-sounding British reference made by Chatterbox itself (flows better than the synthetic one)
+    nat = OUT / "ref_george_natural.wav"
+    ref_line = ("You know, most people never think about the Moon. It's just there, every night, quietly watching. "
+                "But tonight... something is different.")
+    w = model.generate(ref_line, audio_prompt_path=str(OUT / "ref_george.wav"), exaggeration=0.45, cfg_weight=0.5)
+    ta.save(str(nat), _trim(w, sr), sr)
+    variants = [
+        ("A_british_flow", str(OUT / "ref_george.wav"), 0.5, 0.5, 230),
+        ("B_british_natural", str(nat), 0.5, 0.5, 230),
+        ("C_british_natural_emotional", str(nat), 0.65, 0.4, 230),
+        ("D_british_one_take", str(nat), 0.55, 0.45, 1000),
+    ]
+    for label, ref, ex, cfg, mx in variants:
+        chunks = _chunks(PASSAGE, mx)
+        parts, pauses = [], []
+        for c in chunks:
+            parts.append(_trim(model.generate(c, audio_prompt_path=ref, exaggeration=ex, cfg_weight=cfg), sr))
+            pauses.append(0.42 if c.rstrip().endswith("...") else 0.28)
+        full = _join(parts, sr, pauses[:-1])
+        wavp = OUT / f"{label}.wav"
+        ta.save(str(wavp), full, sr)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wavp), "-af", POLISH, "-b:a", "160k",
+                        str(OUT / f"{label}.mp3")], check=True)
+        wavp.unlink()
+        print("made", label, flush=True)
+
+
 if __name__ == "__main__":
-    {"refs": refs, "make": make}[sys.argv[1]]()
+    {"refs": refs, "make": make, "british": british}[sys.argv[1]]()
