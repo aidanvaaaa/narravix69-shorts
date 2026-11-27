@@ -145,5 +145,27 @@ def british():
         print("made", label, flush=True)
 
 
+def story():
+    """Reads STORY_TEXT in the chosen narrator voice (British, natural, emotional) -> out/emotion/story.mp3"""
+    import os
+    import torch
+    import torchaudio as ta
+    from chatterbox.tts import ChatterboxTTS
+    torch.set_num_threads(4)
+    model = ChatterboxTTS.from_pretrained(device="cpu")
+    sr = model.sr
+    nat = pathlib.Path("assets/narrator_ref.ogg")  # a clip of the chosen British narrator, so every video sounds the same
+    text = os.environ["STORY_TEXT"]
+    parts, pauses = [], []
+    for c in _chunks(text, 230):
+        parts.append(_trim(model.generate(c, audio_prompt_path=str(nat), exaggeration=0.65, cfg_weight=0.4), sr))
+        pauses.append(0.42 if c.rstrip().endswith("...") else 0.3)
+    full = _join(parts, sr, pauses[:-1])
+    wavp = OUT / "story.wav"
+    ta.save(str(wavp), full, sr)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wavp), "-af", POLISH, "-b:a", "192k", str(OUT / "story.mp3")], check=True)
+    print("made story", flush=True)
+
+
 if __name__ == "__main__":
-    {"refs": refs, "make": make, "british": british}[sys.argv[1]]()
+    {"refs": refs, "make": make, "british": british, "story": story}[sys.argv[1]]()
