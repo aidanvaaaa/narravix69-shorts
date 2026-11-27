@@ -23,7 +23,7 @@ def render_video(plan, words, duration, out_mp4, seed=0, progress=print, workdir
     hud = dict(hud, col="#ff4a3a") if plan.get("hud_values") else None
     progress("exporting 3D shots")
     names, shots = director.export_all(plan, words, duration, str(work / "data"), seed=seed, hud=hud,
-                                       title_lines=plan.get("title_lines"), end_text="FOLLOW FOR PART 2")
+                                       title_lines=plan.get("title_lines"), end_text="FOLLOW FOR MORE")
     w, h = int(os.environ.get("RENDER_W", 720)), int(os.environ.get("RENDER_H", 1280))
     nproc = max(1, min(3, (os.cpu_count() or 2) // 2))
     groups = [names[i::nproc] for i in range(nproc)]
