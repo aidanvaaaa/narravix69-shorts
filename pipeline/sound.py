@@ -108,7 +108,7 @@ def numbers_loop(n):
     if len(a) < SR:
         return None
     a = np.tile(a, n // len(a) + 2)[:n]
-    return a / (np.sqrt(np.mean(a ** 2)) + 1e-6) * 0.07
+    return a / (np.sqrt(np.mean(a ** 2)) + 1e-6) * 0.04
 
 
 def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0):
@@ -141,7 +141,7 @@ def mix(voice_wav, scenes, duration, out_wav, music=True, mood="what_if", seed=0
             m = music_bed(n / SR, mood, seed)[:n] * 0.35
             duck = 1 - 0.65 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
         else:  # keep the song present but tucked under the voice
-            duck = 1 - 0.4 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
+            duck = 1 - 0.55 * np.clip(env / (env.max() + 1e-6) * 4, 0, 1)
             fade = np.minimum(1.0, (n - np.arange(n)) / (1.2 * SR))  # fade out at the end
             m = m * fade
         if len(scenes) > 2:  # drop the music out just before the punchline
