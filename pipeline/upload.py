@@ -49,7 +49,8 @@ def instagram(path, plan):
     r = requests.post(f"{g}/{config.IG_USER_ID}/media", data={
         "media_type": "REELS", "upload_type": "resumable", "caption": caption_text(plan),
         "share_to_feed": "true", "access_token": tok}, timeout=60)
-    r.raise_for_status()
+    if not r.ok:
+        raise RuntimeError(f"Instagram {r.status_code}: {r.text[:400]}")
     cid = r.json()["id"]
     size = os.path.getsize(path)
     with open(path, "rb") as f:
@@ -66,7 +67,8 @@ def instagram(path, plan):
             raise RuntimeError(f"Instagram processing failed: {st}")
         time.sleep(10)
     pub = requests.post(f"{g}/{config.IG_USER_ID}/media_publish", data={"creation_id": cid, "access_token": tok}, timeout=60)
-    pub.raise_for_status()
+    if not pub.ok:
+        raise RuntimeError(f"Instagram publish {pub.status_code}: {pub.text[:400]}")
     mid = pub.json()["id"]
     link = requests.get(f"{g}/{mid}", params={"fields": "permalink", "access_token": tok}, timeout=30).json().get("permalink", "")
     return {"ok": True, "url": link, "msg": "Instagram: published"}
