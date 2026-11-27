@@ -23,7 +23,7 @@ def youtube(path, plan):
 
     creds = Credentials(None, refresh_token=config.YT_REFRESH_TOKEN, client_id=config.YT_CLIENT_ID,
                         client_secret=config.YT_CLIENT_SECRET, token_uri="https://oauth2.googleapis.com/token",
-                        scopes=["https://www.googleapis.com/auth/youtube.upload"])
+                        scopes=None)  # use whatever the saved key allows
     yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
     body = {"snippet": {"title": (plan["title"] + " #Shorts")[:100], "description": caption_text(plan),
                         "tags": plan["hashtags"], "categoryId": "24"},
