@@ -21,21 +21,21 @@ FX = ["rain", "snow", "fire", "smoke", "confetti", "fireworks", "sparkles", "mon
 PROPS = ["car", "dog", "cash", "box", "jar", "trophy", "tv"]
 LOOKS = ["normal", "gray", "night", "red", "warm", "cold", "dream"]
 
-SYSTEM = f"""You write AND direct viral 35-55 second vertical 3D animated shorts for the channel narravix69,
+SYSTEM = f"""You write AND direct gripping, high-retention 65-90 second vertical 3D animated shorts for the channel narravix69,
 in a blocky game-style world. Return ONLY JSON matching this shape:
 {{"format": "what_if" | "why_it_sucks",
   "topic": "short topic label",
   "title": "under 60 characters, curiosity-driven, no hashtags",
   "title_lines": ["2 short lines for the on-screen hook title, max 18 characters each, UPPERCASE"],
   "description": "1-2 sentence post caption that teases the story and asks a question",
-  "script": "100-140 words, ONE paragraph, narrated in second person or as a story",
+  "script": "170-230 words, ONE paragraph, present tense, second person (You...)",
   "hashtags": ["6 to 10 hashtags without #, mix of broad (shorts, animation) and topic tags"],
   "keywords": ["4-8 single words from the script to highlight in the captions"],
   "hud": {{"tag": "short status like ● LIVE or DAY 1", "sub": "short status line, max 18 chars",
            "label": "what the counter measures, max 22 chars"}},
   "hud_values": ["one counter value per sentence that escalates, max 8 characters, written with DIGITS and symbols, e.g. 100%, 75%, DAY 3, $40, 0:30, 2 HRS"],
   "scenes": [{{"sentence": 0, "stage": one of {STAGES},
-              "shots": [1-2 camera shots from {SHOTS}],
+              "shots": [2 camera shots from {SHOTS}],
               "characters": [{{"role": "hero"|"other"|"crowd", "outfit": one of {OUTFITS},
                                "mood": one of {MOODS}, "action": one of {ACTIONS}}}],
               "fx": [0-2 effects from {FX}],
@@ -43,12 +43,19 @@ in a blocky game-style world. Return ONLY JSON matching this shape:
               "props": [0-2 props from {PROPS}]}}]}}
 
 Story rules:
-- The FIRST sentence is the hook and must grab attention in the first second. No intro, no "in this video".
-- Short punchy sentences (6-14 words). A concrete surprising detail every 2-3 sentences. Escalate.
-- what_if: a dramatic "What if..." premise in a modern blocky world, escalating stakes, a twist ending.
-- why_it_sucks: "Why it sucks to be ..." about a relatable modern role or situation (the youngest sibling,
-  the new kid, the last one picked, a night-shift worker, the kid whose birthday is on a holiday...), dark-funny.
-- End with a punchline or a question that makes people comment.
+- Quality gate: before writing, reject any idea that is generic, slow or obvious. Pick the most gripping,
+  most visual version. Every video needs an instant hook, escalating tension, and a memorable ending.
+- The FIRST sentence (first 3 seconds) drops the viewer straight into danger, a shocking fact, an impossible
+  choice or an absurd visual. Bad: "Today we look at what happens when...". Good: "Your pilot just collapsed,
+  the plane is diving, and you are the only one awake." No intro, no filler, no "in this video".
+- Present tense, second person, short rhythmic sentences (5-12 words). Every sentence must escalate: a new
+  danger, a hard number, a ticking deadline, a reversal. Concrete, vivid, physical details.
+- what_if: a high-stakes survival thriller (split-second emergencies, psychological traps, surreal survival
+  rules, impossible choices) OR an absurd "what if" escalation played completely straight. Ticking clocks,
+  counters and numbers that climb toward disaster.
+- why_it_sucks: a dark-funny escalation of a relatable situation that gets more extreme and absurd every beat.
+- The LAST sentence is a complete, satisfying payoff: a twist, a punchline or a shocking final fact.
+  NEVER "part 2", "to be continued", "like for the rest", "it's just the beginning" or any cliffhanger.
 - Write numbers as words in the script (the voice reads them). Only hud_values use digits. No real people, no brand names, no trademarked game names, no copyrighted characters.
 
 Directing rules (you are the camera operator too):
@@ -189,7 +196,7 @@ def write_plan(used_topics, fmt=None):
         try:
             plan = _call_gemini(prompt)
             words = len(plan.get("script", "").split())
-            if not 90 <= words <= 165:
+            if not 150 <= words <= 260:
                 err = f"script length {words} words"
                 continue
             plan["format"] = fmt
