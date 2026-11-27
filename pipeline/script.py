@@ -119,7 +119,7 @@ Story rules:
 - Write numbers as words in the script (the voice reads them). Only stamps use digits. No real people, no brand names, no trademarked game names, no copyrighted characters.
 
 Directing rules (you are the camera operator too):
-- Exactly one scene object per sentence of the script, in order, "sentence" = 0-based index.
+- Exactly one scene object per sentence of the script, in order, "sentence" = 0-based index. Count your sentences: the number of scenes MUST equal the number of sentences.
 - SHOW what the sentence says: pick the science stage that matches it (the Moon breaking -> moon_breaks, waves ->
   tsunami_city, deep sea -> deep_ocean...). Use the stages suggested in the topic brief. Use city_day / city_night
   only for normal everyday moments before or after the disaster.
@@ -214,7 +214,13 @@ def _clean(plan):
     scenes = {s.get("sentence", i): s for i, s in enumerate(plan.get("scenes", []))}
     fixed, last = [], None
     for i in range(n):
-        s = dict(scenes.get(i) or last or {})
+        if scenes.get(i):
+            s = dict(scenes[i])
+        else:  # missing scene: reuse the last place but with a fresh camera and a standing hero
+            s = dict(last or {})
+            s["shots"] = ["event", "close"] if i % 2 else ["close", "event"]
+            s["characters"] = [dict(c, action="idle" if c.get("action") in ("lie", "fall") else c.get("action"))
+                               for c in (s.get("characters") or [])]
         s["sentence"] = i
         s["stage"] = _pick(s.get("stage"), STAGES, (last or {}).get("stage", "city_day"))
         s["shots"] = [x for x in (s.get("shots") or []) if x in SHOTS][:2] or ["medium"]
@@ -274,6 +280,10 @@ def write_plan(used_topics, fmt=None):
             words = len(plan.get("script", "").split())
             if not 150 <= words <= 260:
                 err = f"script length {words} words"
+                continue
+            nsent = len(split_sentences(plan["script"]))
+            if len(plan.get("scenes") or []) < nsent - 1:
+                err = f"{len(plan.get('scenes') or [])} scenes for {nsent} sentences"
                 continue
             plan["format"] = fmt
             if t:
