@@ -33,14 +33,14 @@ def ig():
     ver = os.environ.get("GRAPH_VERSION", "v25.0")
     if not (uid and tok):
         return "Instagram: one or more keys are empty"
-    r = requests.get(f"https://graph.facebook.com/{ver}/{uid}", params={"fields": "username,account_type", "access_token": tok}, timeout=30)
+    r = requests.get(f"https://graph.facebook.com/{ver}/{uid}", params={"fields": "username", "access_token": tok}, timeout=30)
     if not r.ok:
         e = r.json().get("error", {}) if r.headers.get("content-type", "").startswith("application/json") else {"message": r.text[:200]}
         return f"Instagram: FAILED ({e.get('type', '')} code {e.get('code', '')}: {e.get('message', '')})"
     j = r.json()
     d = requests.get(f"https://graph.facebook.com/{ver}/debug_token", params={"input_token": tok, "access_token": tok}, timeout=30).json().get("data", {})
     scopes = ", ".join(d.get("scopes", [])) or "unknown"
-    return f"Instagram: OK, connected to @{j.get('username')} ({j.get('account_type', '')}); permissions: {scopes}"
+    return f"Instagram: OK, connected to @{j.get('username')} ; permissions: {scopes}"
 
 
 if __name__ == "__main__":
