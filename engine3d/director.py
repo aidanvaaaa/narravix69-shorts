@@ -17,6 +17,7 @@ from . import engine
 from .engine import export, C, rot, M4, box, lerp, ease, eout, shake, walk
 from .psets import *  # noqa: F401,F403  (all sets, props, characters)
 from .luxsets import lux_city, decorate
+from . import wsets
 
 FPS = 30
 
@@ -43,6 +44,8 @@ STAGES = {
     'red_room':     (lambda sc, t: redroom(sc, t), (0, 0, 0), (-6.4, 6.4, -6.4, 6.4, 7.6)),
     'void':         (lambda sc, t: void(sc, t), (0, 0, 0), None),
 }
+for _n, (_b, _h, _bd) in wsets.WORLD_STAGES.items():
+    STAGES[_n] = (_b, _h, _bd)
 STAGE_NAMES = list(STAGES)
 
 
@@ -163,7 +166,7 @@ FACE = {'happy': 'smile', 'smile': 'smile', 'excited': 'grin', 'laugh': 'snicker
         'powerful': 'power', 'tired': 'sleep', 'blank': 'blank', 'panic': 'choke'}
 ACTIONS = ['idle', 'talk', 'walk', 'run', 'point', 'cheer', 'shock', 'scared', 'think', 'sad', 'phone',
            'jump', 'punch', 'dance', 'fall', 'lie', 'float', 'wave', 'sit']
-SHOTS = ['wide', 'medium', 'close', 'low', 'ots', 'pov', 'drone', 'track', 'dutch', 'reveal', 'ecu', 'detail']
+SHOTS = ['event', 'wide', 'medium', 'close', 'low', 'ots', 'pov', 'drone', 'track', 'dutch', 'reveal', 'ecu', 'detail']
 FX = ['rain', 'snow', 'fire', 'smoke', 'confetti', 'fireworks', 'sparkles', 'money', 'shake']
 
 
@@ -260,7 +263,7 @@ def apply_fx(sc, fx, center, t):
         elif f == 'confetti':
             confetti(sc, t, center)
         elif f == 'fireworks':
-            fireworks(sc, t, [(center[0] - 6, 16, center[2] - 18), (center[0] + 7, 19, center[2] - 22)])
+            fireworks(sc, t, [(center[0] - 6, 16, center[2] - 18, '#ffd24a'), (center[0] + 7, 19, center[2] - 22, '#5ab4ff')])
         elif f == 'sparkles':
             sparkles(sc, center, t)
         elif f == 'money':
@@ -425,6 +428,7 @@ def build_frame(shot, lt, gt):
     st_name = shot['stage'] if shot['stage'] in STAGES else 'city_day'
     builder, H, bounds, syaw = stage_info(st_name)
     sc = engine.Scene()
+    wsets.LT[0] = lt
     builder(sc, gt)
     decorate(sc, st_name, gt)
     obs = _obstacles([b for b in sc.boxes if not (b.size[1] < 0.3 and b.M[1, 3] < 0.4)]) if bounds else None
@@ -436,6 +440,8 @@ def build_frame(shot, lt, gt):
     kind = shot['shot']
     others = [c for c in chars if c.get('role') != 'hero']
     hero = next((c for c in chars if c.get('role') == 'hero'), None)
+    if hero is not None and st_name in ('deep_ocean', 'whale', 'earth_core') and hero.get('action') in ('fall', 'lie', 'jump', 'walk', 'run'):
+        hero = dict(hero, action='float')
     other_pos = None
     face_pair = kind in ('ots', 'pov') and others
     if face_pair:
@@ -467,11 +473,17 @@ def build_frame(shot, lt, gt):
         kind = 'drone' if kind in ('close', 'medium') else 'wide'
         camH = (H[0], H[1] - 1.0, H[2])
     local_other = tuple(_rot_about(other_pos, H, -syaw)) if other_pos is not None else None
-    cam_pos, target, fov, roll = camera(kind, camH, lt, shot['dur'], shot['seed'], None, local_other, scale)
-    cam_pos = clamp_cam(_rot_about(cam_pos, H, syaw), bounds)
-    target = _rot_about(np.array(target, float), H, syaw)
-    if obs is not None and kind != 'pov':
-        cam_pos = unblock(cam_pos, target, obs, bounds)
+    ev = wsets.event_camera(st_name, kind, lt, shot['dur'], shot['seed']) if (st_name in wsets.WORLD_STAGES and kind in ('wide', 'drone', 'reveal', 'event')) else None
+    if ev is not None:
+        cam_pos, target, fov, roll = np.array(ev[0], float), np.array(ev[1], float), ev[2], ev[3]
+    else:
+        if kind == 'event':
+            kind = 'wide'
+        cam_pos, target, fov, roll = camera(kind, camH, lt, shot['dur'], shot['seed'], None, local_other, scale)
+        cam_pos = clamp_cam(_rot_about(cam_pos, H, syaw), bounds)
+        target = _rot_about(np.array(target, float), H, syaw)
+        if obs is not None and kind != 'pov':
+            cam_pos = unblock(cam_pos, target, obs, bounds)
     if 'shake' in (shot.get('fx') or []):
         cam_pos = cam_pos + shake(lt, 0.09, seed=shot['seed'])
     # living handheld drift
@@ -558,12 +570,18 @@ def export_all(plan, words, duration, outdir, seed=1, hud=None, end_text='FOLLOW
             if txt:
                 meta['cap'] = dict(t=txt.upper() if key else txt, col=[255, 255, 255],
                                    pop=1.0 + (0.55 if key else 0.3) * math.exp(-age * 16), st=1)
-            if hud:
+            if hud and False:
                 v = hud_vals[min(shot['sentence'], len(hud_vals) - 1)] if hud_vals else ''
                 prev = hud_vals[min(shot['sentence'] - 1, len(hud_vals) - 1)] if hud_vals and shot['sentence'] > 0 else v
                 meta['hud'] = dict(tag=hud.get('tag', ''), sub=hud.get('sub', ''), label=hud.get('label', ''),
                                    value=str(v), col=hud.get('col', '#ff4a3a'),
                                    pulse=max(0.0, 1 - (lt / 0.4)) if v != prev and lt < 0.4 else 0.0)
+            stamps = plan.get('stamps') or []
+            if stamps and shot['sentence'] < len(stamps) and stamps[shot['sentence']]:
+                s0 = next(x['start'] for x in shots if x['sentence'] == shot['sentence'])
+                age = gt - s0
+                if gt > 2.3 and age < 2.4:
+                    meta['stamp'] = dict(t=str(stamps[shot['sentence']]).upper(), a=min(1.0, age / 0.2) * min(1.0, (2.4 - age) / 0.3))
             if title_lines and gt < 2.2:
                 meta['title'] = dict(lines=title_lines, a=min(1.0, gt / 0.2) * min(1.0, (2.2 - gt) / 0.25), hl='#ffd84a')
             if duration - gt < 2.0 and end_text:

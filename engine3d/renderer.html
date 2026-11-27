@@ -365,7 +365,7 @@ function renderFrame(fi) {
   }
   if (fr.news) drawNews(fi);
   if (fr.crack) drawCrack(fr.crack);
-  if (fr.hud) drawHud(fr.hud);
+  if (fr.stamp && !fr.end) drawStamp(fr.stamp);
   if (fr.title) drawTitle(fr.title);
   const endA = fr.end ? Math.min(1, fr.end.a) : 0;
   if (fr.cap && endA < 0.6) drawCaption(fr.cap);
@@ -434,11 +434,31 @@ function drawCaption(cp) {
   ctx.fillStyle = '#ffffff'; ctx.fillText(cp.t, x, y);
 }
 function drawHandle(a) {
-  ctx.save(); ctx.globalAlpha = 0.82 * a; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  ctx.font = '22px PoppinsB'; ctx.lineJoin = 'round';
-  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
-  ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.strokeText('narravix69', LW - 22, LH - 26);
-  ctx.shadowColor = 'transparent'; ctx.fillStyle = '#ffffff'; ctx.fillText('narravix69', LW - 22, LH - 26);
+  // signature watermark: small diamond + rule, letter-spaced NARRAVIX, gold 69
+  ctx.save(); ctx.globalAlpha = 0.9 * a; ctx.textBaseline = 'alphabetic';
+  const R = LW - 30, B = LH - 34;
+  ctx.font = '25px Anton'; ctx.letterSpacing = '5px';
+  const w1 = ctx.measureText('NARRAVIX').width; const w2 = ctx.measureText('69').width;
+  const x0 = R - w1 - w2;
+  ctx.shadowColor = 'rgba(0,0,0,0.65)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.textAlign = 'left'; ctx.fillText('NARRAVIX', x0, B);
+  const g = ctx.createLinearGradient(0, B - 24, 0, B); g.addColorStop(0, '#fff1b8'); g.addColorStop(0.5, '#f2c94c'); g.addColorStop(1, '#b8862a');
+  ctx.fillStyle = g; ctx.fillText('69', x0 + w1, B); ctx.letterSpacing = '0px';
+  // thin gold rule with a diamond above the word
+  ctx.shadowBlur = 6; const ry = B - 34;
+  ctx.fillStyle = 'rgba(242,201,76,0.95)'; ctx.fillRect(R - 44, ry, 44, 1.5); ctx.fillRect(x0, ry, Math.max(0, R - 64 - x0), 1.5);
+  ctx.save(); ctx.translate(R - 54, ry + 0.75); ctx.rotate(Math.PI / 4); ctx.fillRect(-3.5, -3.5, 7, 7); ctx.restore();
+  ctx.restore();
+}
+function drawStamp(st) {
+  // timeline chip under the top edge: "DAY 1", "2 YEARS LATER", "-8,000 M"
+  ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, st.a)); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '30px PoppinsB'; ctx.letterSpacing = '4px';
+  const w = ctx.measureText(st.t).width + 70, x = LW / 2, y = LH * 0.14 + (1 - Math.min(1, st.a)) * -16;
+  ctx.fillStyle = 'rgba(8,10,16,0.62)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - 30, w, 60, 30); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,216,74,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#ffd84a'; ctx.beginPath(); ctx.arc(x - w / 2 + 26, y, 6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffffff'; ctx.fillText(st.t, x + 10, y + 1); ctx.letterSpacing = '0px';
   ctx.restore();
 }
 function strokeFill(t, x, y, sz, fill, font, lw) {
