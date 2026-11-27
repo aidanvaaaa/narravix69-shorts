@@ -467,9 +467,13 @@ def build_frame(shot, lt, gt):
     act = (hero or {}).get('action', 'idle')
     yo = {'float': 2.2 + 0.4 * math.sin(gt * 1.8), 'jump': 1.0, 'fall': -3.4, 'lie': -3.6, 'sit': -0.6}.get(act, 0.0)
     camH = (H[0], H[1] + yo * scale, H[2])
+    if act in ('walk', 'run'):  # the camera follows a moving hero instead of letting him walk into the lens
+        sp = 2.6 if act == 'run' else 1.2
+        a = math.radians(syaw)
+        camH = (camH[0] + math.sin(a) * sp * (lt - 1.0), camH[1], camH[2] + math.cos(a) * sp * (lt - 1.0))
     if act == 'sit' and kind in ('close', 'low', 'dutch', 'track'):
         kind = 'medium' if kind != 'low' else 'wide'
-    if act in ('fall', 'lie') and kind in ('close', 'low', 'dutch', 'track', 'medium'):
+    if act in ('fall', 'lie') and kind in ('close', 'low', 'dutch', 'track', 'medium', 'detail', 'ecu', 'ots', 'pov'):
         kind = 'drone' if kind in ('close', 'medium') else 'wide'
         camH = (H[0], H[1] - 1.0, H[2])
     local_other = tuple(_rot_about(other_pos, H, -syaw)) if other_pos is not None else None
