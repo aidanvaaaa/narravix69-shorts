@@ -93,10 +93,10 @@ def pendant_img():
 
 
 def drip(out, base, hm, arms):
-    """Hero jewellery: two slim diamond chains, the longer one with a NARRAVIX69 iced pendant; iced watches, studs."""
+    """Hero jewellery: one slim diamond chain with a NARRAVIX69 iced pendant; iced watches, studs."""
     t = engine.TIME[0]
-    for i, (depth, w) in enumerate(((0.5, 0.5), (0.95, 0.62))):
-        n = 26 + i * 5
+    for i, (depth, w) in enumerate(((0.95, 0.62),)):
+        n = 30
         for k in range(n):
             u = -1 + 2 * k / (n - 1)
             x = u * w; y = 3.97 - (1 - u * u) * depth
