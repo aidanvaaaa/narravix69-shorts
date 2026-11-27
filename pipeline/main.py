@@ -29,8 +29,8 @@ def quality_checks(path, samples):
     types = [s["codec_type"] for s in info["streams"]]
     v = [s for s in info["streams"] if s["codec_type"] == "video"][0]
     problems = []
-    if not 25 <= dur <= 62:
-        problems.append(f"duration {dur:.1f}s outside 25-62s")
+    if not 50 <= dur <= 150:
+        problems.append(f"duration {dur:.1f}s outside 50-150s")
     if "audio" not in types:
         problems.append("no audio")
     if (v["width"], v["height"]) != (1080, 1920):
