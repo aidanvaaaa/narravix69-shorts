@@ -124,7 +124,9 @@ Directing rules (you are the camera operator too):
   tsunami_city, deep sea -> deep_ocean...). Use the stages suggested in the topic brief. Use city_day / city_night
   only for normal everyday moments before or after the disaster.
 - The hero ("you") is a confident stylish guy who witnesses and survives it all; he reacts to what happens.
-- Pick the stage that best fits each sentence; stay in a location for 2-3 sentences, then move on.
+- EVERY sentence gets its own NEW, exciting visual that shows exactly what that sentence describes. Change the
+  stage on (almost) every sentence: never the same stage more than twice in a row, and use at least 6 different
+  stages in the video. Never repeat a stage + shot combination. No filler shots of the hero just standing around.
 - Open on a "close" or "low" shot of the hero; use "event" to show the spectacle itself (the planet, the wave,
   the volcano, the creatures) in at least half of the sentences, "reveal" when the scale of something is shown,
   "drone" for big events, "dutch" for chaos, "ots"/"pov" only when another character is present, "wide" to set a place,
@@ -282,6 +284,10 @@ def write_plan(used_topics, fmt=None):
                 err = f"script length {words} words"
                 continue
             nsent = len(split_sentences(plan["script"]))
+            stages = [x.get("stage") for x in (plan.get("scenes") or [])]
+            if len(set(stages)) < min(6, nsent // 2):
+                err = f"only {len(set(stages))} different stages"
+                continue
             if len(plan.get("scenes") or []) < nsent - 1:
                 err = f"{len(plan.get('scenes') or [])} scenes for {nsent} sentences"
                 continue
