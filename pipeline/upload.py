@@ -54,10 +54,13 @@ def instagram(path, plan):
     cid = r.json()["id"]
     size = os.path.getsize(path)
     with open(path, "rb") as f:
-        up = requests.post(f"https://rupload.facebook.com/ig-api-upload/{config.GRAPH_VERSION}/{cid}",
-                           headers={"Authorization": f"OAuth {tok}", "offset": "0", "file_size": str(size)},
-                           data=f, timeout=600)
-    up.raise_for_status()
+        body = f.read()
+    up = requests.post(f"https://rupload.facebook.com/ig-api-upload/{config.GRAPH_VERSION}/{cid}",
+                       headers={"Authorization": f"OAuth {tok}", "offset": "0", "file_size": str(size),
+                                "Content-Type": "application/octet-stream"},
+                       data=body, timeout=600)
+    if not up.ok:
+        raise RuntimeError(f"Instagram upload {up.status_code}: {up.text[:400]}")
     for _ in range(60):
         st = requests.get(f"{g}/{cid}", params={"fields": "status_code,status", "access_token": tok}, timeout=30).json()
         code = st.get("status_code")
