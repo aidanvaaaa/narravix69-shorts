@@ -121,10 +121,11 @@ def tiktok(path, plan):
 
 
 def notify(text):
-    if not config.NOTIFY_WEBHOOK:
+    url = (config.NOTIFY_WEBHOOK or "").strip()
+    if not url.startswith("https://"):  # empty or not a real webhook link: just log the message
         print(text)
         return
     try:
-        requests.post(config.NOTIFY_WEBHOOK, json={"content": text[:1900], "username": "Narravix69 Pipeline"}, timeout=20)
+        requests.post(url, json={"content": text[:1900], "username": "Narravix69 Pipeline"}, timeout=20)
     except Exception as e:  # noqa: BLE001
-        print("notify failed", e)
+        print("notify failed:", type(e).__name__)  # never print the URL
