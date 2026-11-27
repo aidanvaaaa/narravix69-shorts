@@ -43,8 +43,35 @@ def ig():
     return f"Instagram: OK, connected to @{j.get('username')} ; permissions: {scopes}"
 
 
+def ig_upload():
+    """Uploads a 3-second test clip to Instagram WITHOUT publishing it, to test the upload step."""
+    import subprocess, time
+    uid, tok = os.environ.get("IG_USER_ID", "").strip(), os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    ver = os.environ.get("GRAPH_VERSION", "v25.0")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=720x1280:d=3:r=30",
+                    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "3", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-shortest", "/tmp/t.mp4"], check=True)
+    r = requests.post(f"https://graph.facebook.com/{ver}/{uid}/media", data={"media_type": "REELS", "upload_type": "resumable",
+                      "caption": "test", "share_to_feed": "false", "access_token": tok}, timeout=60)
+    if not r.ok:
+        return f"Instagram upload test: create FAILED {r.status_code}: {r.text[:300]}"
+    cid = r.json()["id"]
+    body = open("/tmp/t.mp4", "rb").read()
+    up = requests.post(f"https://rupload.facebook.com/ig-api-upload/{ver}/{cid}", headers={
+        "Authorization": f"OAuth {tok}", "offset": "0", "file_size": str(len(body)), "Content-Type": "application/octet-stream"},
+        data=body, timeout=120)
+    if not up.ok:
+        return f"Instagram upload test: upload FAILED {up.status_code}: {up.text[:400]}"
+    for _ in range(12):
+        st = requests.get(f"https://graph.facebook.com/{ver}/{cid}", params={"fields": "status_code,status", "access_token": tok}, timeout=30).json()
+        if st.get("status_code") in ("FINISHED", "ERROR", "EXPIRED"):
+            break
+        time.sleep(5)
+    return f"Instagram upload test: upload OK, processing status {st.get('status_code')} ({st.get('status', '')}) - not published"
+
+
 if __name__ == "__main__":
-    for f in (yt, ig):
+    for f in (yt, ig, ig_upload):
         try:
             print(f())
         except Exception as e:  # noqa: BLE001
