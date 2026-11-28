@@ -30,7 +30,7 @@ export const flockAt = (t: number): V3 => {
   const u = t - SCENES[12];
   return [FLOCK0[0] + 1.6 * u, FLOCK0[1] + 0.25 * Math.sin(u * 1.3), FLOCK0[2]];
 };
-export const PRISON: V3 = [990, 6, -200];
+export const PRISON: V3 = [990, 0, -200];
 
 // ---- cameras ----
 export type Cam = { pos: V3; look: V3; fov: number; roll?: number };
@@ -39,20 +39,21 @@ const K = (t: number, c: Cam | ((t: number) => Cam), dur = 0.8, cut = false): Ke
 
 const CAMS: Key[][] = [
   // 1 hook: medium on the prisoner, punch in on "single breadcrumb"
-  [K(0, { pos: [0.35, 1.3, 3.9], look: [-0.2, 1.12, 0.6], fov: 40 }), K(at("single") - 0.15, { pos: [0.0, 1.42, 2.35], look: [-0.18, 1.36, 0.6], fov: 36, roll: -0.04 }, 0.45)],
+  [K(0, { pos: [0.6, 1.55, -1.45], look: [-0.3, 1.38, 0.6], fov: 50, roll: 0.05 }), K(0.01, { pos: [0.1, 1.48, -0.42], look: [-0.3, 1.42, 0.6], fov: 40, roll: -0.02 }, 0.55),
+   K(at("single") - 0.25, { pos: [0.22, 1.5, -0.85], look: [-0.25, 1.48, 0.6], fov: 42, roll: 0.03 }, 0.4)],
   // 2 morning routine: three-quarter view of the walk to the window
-  [K(SCENES[1], { pos: [2.3, 1.45, 1.4], look: [-0.2, 1.2, -1.1], fov: 40 }), K(5.3, { pos: [2.0, 1.4, 0.7], look: [0.35, 1.25, -1.95], fov: 40 }, 1.1)],
+  [K(SCENES[1], { pos: [1.85, 1.45, 0.95], look: [-0.1, 1.2, -1.0], fov: 46 }), K(5.5, { pos: [1.85, 1.5, 0.25], look: [0.8, 1.55, -2.3], fov: 38 }, 1.1)],
   // 3 the first pigeon: close on the window from inside
   [K(SCENES[2], { pos: [0.35, 1.5, -1.05], look: [0.65, 1.72, -2.65], fov: 32 })],
   // 4 two, then a hard cut to the wide cell full of pigeons on "forty"
   [K(SCENES[3], { pos: [0.3, 1.5, -0.85], look: [0.68, 1.7, -2.65], fov: 34 }),
    K(at("forty") - 0.05, { pos: [1.5, 1.6, 2.3], look: [-0.6, 0.85, -0.6], fov: 50, roll: 0.03 }, 0, true)],
   // 5 guards seen from inside the cell, through the bars
-  [K(SCENES[4], { pos: [-0.55, 1.5, 0.9], look: [1.1, 1.5, 4.1], fov: 40 })],
+  [K(SCENES[4], { pos: [3.15, 1.7, 5.3], look: [0.2, 1.15, 1.3], fov: 54 })],
   // 6 the guards laugh: close, from the corridor
-  [K(SCENES[5], { pos: [1.12, 1.55, 2.9], look: [1.12, 1.55, 4.6], fov: 52 }), K(at("laugh") - 0.1, { pos: [1.12, 1.57, 3.0], look: [1.12, 1.57, 4.6], fov: 50, roll: 0.03 }, 0.3)],
+  [K(SCENES[5], { pos: [0.35, 1.55, 1.35], look: [1.0, 1.75, 5.6], fov: 54 }), K(at("laugh") - 0.1, { pos: [0.4, 1.57, 1.6], look: [1.0, 1.8, 5.6], fov: 50, roll: 0.03 }, 0.3)],
   // 7 night: the guard on his chair nods off
-  [K(SCENES[6], { pos: [2.35, 1.35, 3.0], look: [3.45, 1.05, 5.25], fov: 38 }), K(at("asleep") - 0.2, { pos: [2.75, 1.25, 3.65], look: [3.45, 1.05, 5.25], fov: 34 }, 0.8)],
+  [K(SCENES[6], { pos: [1.85, 1.35, 3.0], look: [3.55, 0.8, 5.4], fov: 52 }), K(at("asleep") - 0.2, { pos: [2.2, 1.25, 3.4], look: [3.55, 0.78, 5.4], fov: 48 }, 0.8)],
   // 8 night: strings to every bird, slow orbit
   [K(SCENES[7], { pos: [1.6, 1.45, 2.35], look: [-0.35, 0.8, -0.25], fov: 42 }), K(21.6, { pos: [-1.0, 1.75, 2.45], look: [-0.3, 0.85, -0.3], fov: 42 }, 2.4)],
   // 9 thirty days later: the warden marches down the corridor (camera pans with him)
@@ -88,7 +89,7 @@ export const camAt = (f: number): Cam => {
 /** shot 9: the warden marches from the far end of the corridor to the cell door */
 export const wardenX = (t: number) => lerp(-4.8, 0.95, ease(t, KW.warden - 0.6, KW.cell - 0.1));
 /** shot 2: prisoner walks from mid-cell to the window */
-export const P_WALK: [V3, V3] = [[-1.0, 0, 0.1], [0.45, 0, -1.95]];
+export const P_WALK: [V3, V3] = [[-1.0, 0, 0.1], [1.05, 0, -2.05]];
 export const walkK = (t: number) => clamp01((t - 4.35) / 2.0);
 
 /** the forty pigeons: home spots in the cell (shots 4-6), deterministic */

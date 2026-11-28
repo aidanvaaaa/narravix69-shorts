@@ -10,6 +10,7 @@ import { TONE, CHAR } from "../bridge/shade";
 import { LIGHTS, LOOK } from "../bridge/lights";
 import { NOINK } from "../bridge/ink";
 import { wallTex, floorTex, rustTex, vineTex, tallyTex, webTex, puddleTex, signTex, buildBay } from "./pdetail";
+import { INMATES, haTex, plateTex } from "./pextra";
 import { PRISONER, GUARD_A, GUARD_B, WARDEN, drawPigeon, drawCrumb, drawZ, drawGlow, drawSky } from "./ptoon";
 import {
   FPS, KW, V3, Light, SHOTS, shotAt, camAt, at, ease, smooth, clamp01, lerp, lerp3, wardenX, P_WALK, walkK, CELL_SPOTS, landT, WINDOW,
@@ -95,9 +96,34 @@ export class PWorld {
     // side walls of the cell
     box(wall, -2.3, 0, -2.9, -2.0, 4.2, 2.5); box(wall, 2.0, 0, -2.9, 2.3, 4.2, 2.5);
     // front: neighbouring cells' walls left/right of the bars, a lintel above the bars
-    box(wallDark, -6.5, 0, 2.5, -2.0, 4.2, 2.8); box(wallDark, 2.0, 0, 2.5, 6.5, 4.2, 2.8); box(wallDark, -2.0, 3.2, 2.5, 2.0, 4.2, 2.8);
+    box(wallDark, -6.5, 3.2, 2.5, 6.5, 4.2, 2.8); // lintel over the whole cell row
+    for (const x of [-6.5, -2.3, 2.0, 6.2]) box(wallDark, x, 0, 2.5, x + 0.3, 3.2, 2.8); // pillars between cells
+    // neighbour cells left and right: back walls, outer walls, bunks, bars
+    box(wall, -6.5, 0, -2.9, -2.3, 4.2, -2.5); box(wall, 2.3, 0, -2.9, 6.5, 4.2, -2.5);
+    box(wall, -6.8, 0, -2.9, -6.5, 4.2, 2.8); box(wall, 6.5, 0, -2.9, 6.8, 4.2, 2.8);
+    for (const x0 of [-6.3, 5.4]) { box(wood, x0, 0, -2.4, x0 + 0.9, 0.42, -0.4, 0.8); box(mattress, x0 + 0.03, 0.42, -2.36, x0 + 0.87, 0.56, -0.44, 0); }
     // corridor: far wall and the two ends
-    box(wallDark, -6.5, 0, 7.2, 6.5, 4.2, 7.6); box(wallDark, -6.8, 0, 2.5, -6.5, 4.2, 7.6); box(wallDark, 6.5, 0, 2.5, 6.8, 4.2, 7.6);
+    // the far side of the block: two tiers of cells behind bars, a catwalk with a railing
+    box(floor, -6.5, -0.2, 7.6, 6.5, 0, 10.9, 2.0);
+    box(wallDark, -6.8, 0, 2.5, -6.5, 8.2, 10.9); box(wallDark, 6.5, 0, 2.5, 6.8, 8.2, 10.9); box(wallDark, -6.5, 0, 10.5, 6.5, 8.2, 10.9);
+    for (const x of [-6.5, -3.4, -0.15, 3.1, 6.2]) box(wallDark, x, 0, 7.2, x + 0.3, 8.2, 10.5); // dividers
+    box(wallDark, -6.5, 3.2, 7.2, 6.5, 4.4, 7.5); box(wallDark, -6.5, 7.4, 7.2, 6.5, 8.2, 7.5); // lintels
+    box(floor, -6.5, 4.2, 6.1, 6.5, 4.4, 10.5, 2.0); // catwalk + upper floor
+    for (let x = -6.3; x < 6.4; x += 0.9) box(iron, x, 4.4, 6.12, x + 0.05, 5.35, 6.17, 0);
+    box(iron, -6.5, 5.3, 6.1, 6.5, 5.38, 6.2, 0); box(iron, -6.5, 4.85, 6.12, 6.5, 4.9, 6.17, 0);
+    for (let x = -6.2; x < 6.3; x += 0.2) { if (Math.abs(x + 0.0) < 0.2 || Math.abs(x + 3.25) < 0.2 || Math.abs(x - 3.25) < 0.2) continue;
+      b.add(new THREE.CylinderGeometry(0.024, 0.024, 3.2, 8).translate(x, 1.6, 7.3), iron); b.add(new THREE.CylinderGeometry(0.024, 0.024, 3.0, 8).translate(x, 5.9, 7.3), iron); }
+    for (const x0 of [-6.2, -3.0, 0.3, 3.5]) { box(wood, x0, 0, 9.6, x0 + 1.8, 0.42, 10.45, 0.8); box(mattress, x0 + 0.03, 0.42, 9.65, x0 + 1.77, 0.56, 10.4, 0); }
+    // neighbour-cell bars on our side
+    for (let x = -6.15; x < -2.35; x += 0.2) b.add(new THREE.CylinderGeometry(0.024, 0.024, 3.2, 8).translate(x, 1.6, 2.62), iron);
+    for (let x = 2.45; x < 6.2; x += 0.2) b.add(new THREE.CylinderGeometry(0.024, 0.024, 3.2, 8).translate(x, 1.6, 2.62), iron);
+    // security camera and caged wall lamps
+    box(iron, 6.1, 3.5, 3.0, 6.5, 3.62, 3.12, 0); box(iron, 5.75, 3.38, 2.95, 6.15, 3.6, 3.2, 0);
+    // the guard's desk clutter: mug, donut box, newspaper
+    b.add(new THREE.CylinderGeometry(0.045, 0.04, 0.11, 12).translate(4.35, 0.835, 5.6), lam("pg_mug", () => ({ color: "#e9e4da" })));
+    box(lam("pg_donutBox", () => ({ color: "#f2b7c6" })), 4.55, 0.78, 5.55, 4.95, 0.86, 5.95, 0);
+    b.add(new THREE.TorusGeometry(0.06, 0.028, 8, 16).rotateX(Math.PI / 2).translate(4.75, 0.89, 5.75), lam("pg_donut", () => ({ color: "#d77a9a" })));
+    box(lam("pg_paper", () => ({ color: "#ddd8cc" })), 4.15, 0.78, 5.85, 4.5, 0.795, 6.08, 0);
     // bunk: frame, mattress, pillow (the blanket is its own mesh: it disappears)
     box(wood, -1.98, 0, -2.42, -1.02, 0.42, -0.35, 0.8); box(mattress, -1.95, 0.42, -2.38, -1.05, 0.56, -0.4, 0);
     box(pillow, -1.85, 0.56, -2.32, -1.15, 0.66, -1.95, 0);
@@ -159,12 +185,19 @@ export class PWorld {
     decal("pg_v1", V0, 1.6, 3.2, -1.2, 2.6, -2.49, 0); decal("pg_v2", V1, 1.2, 2.4, 0.65, 3.0, -2.49, 0); decal("pg_v3", V2, 1.4, 2.8, 1.5, 2.8, -2.49, 0);
     decal("pg_v4", V1, 1.6, 3.2, -1.99, 2.6, 1.4, Math.PI / 2); decal("pg_v5", V2, 1.6, 3.2, 1.99, 2.6, -1.2, -Math.PI / 2); decal("pg_v6", V0, 1.4, 2.8, 1.99, 2.8, 1.6, -Math.PI / 2);
     decal("pg_v7", V0, 2.0, 2.2, -0.6, 3.1, 2.49, 0); decal("pg_v8", V2, 2.0, 2.2, 1.4, 3.1, 2.49, 0);
-    decal("pg_v9", V1, 2.0, 4.0, -4.5, 2.2, 7.19, Math.PI); decal("pg_v10", V0, 2.0, 4.0, 3.2, 2.2, 7.19, Math.PI); decal("pg_v11", V2, 1.6, 3.2, -2.6, 2.6, 2.81, 0); decal("pg_v12", V1, 1.6, 3.2, 3.4, 2.6, 2.81, 0);
+    decal("pg_v9", V1, 2.0, 4.0, -4.5, 6.2, 7.19, Math.PI); decal("pg_v10", V0, 2.0, 4.0, 3.2, 6.2, 7.19, Math.PI); decal("pg_v13", V2, 1.6, 3.6, -6.49, 5.0, 5.0, Math.PI / 2); decal("pg_v11", V2, 1.6, 3.2, -2.6, 2.6, 2.81, 0); decal("pg_v12", V1, 1.6, 3.2, 3.4, 2.6, 2.81, 0);
     decal("pg_tallyM", tallyTex(), 1.1, 1.1, -1.99, 1.25, -1.0, Math.PI / 2);
     for (const [x, z, ry] of [[-1.98, -2.48, 0], [1.98, -2.48, -Math.PI / 2]] as const) decal("pg_webM", webTex(), 0.7, 0.7, x + (ry ? -0.0 : 0.35), 3.2, z + (ry ? 0.35 : 0), ry);
     for (const [x, z, s] of [[0.9, 0.9, 0.9], [-0.9, 1.9, 0.6], [2.6, 4.8, 1.1], [-2.0, 5.6, 0.8]] as const) decal("pg_puddleM", puddleTex(), s, s * 0.7, x, 0.006, z, 0.4, true);
-    decal("pg_noPets", signTex("pg_noPetsT", [["NO", 70], ["PETS", 70]], true), 1.0, 0.62, 0.35, 2.25, 7.19, Math.PI);
-    this.counter = decal("pg_countA", signTex("pg_countAT", [["DAYS WITHOUT", 40], ["AN ESCAPE", 40], ["2431", 96]]), 1.0, 0.62, 1.95, 2.55, 7.19, Math.PI);
+    decal("pg_noPets", signTex("pg_noPetsT", [["NO", 70], ["PETS", 70]], true), 1.0, 0.62, 0.35, 3.8, 7.19, Math.PI);
+    decal("pg_plate13", plateTex("C-13"), 0.5, 0.2, 1.1, 3.55, 2.81, 0);
+    ["C-21", "C-22", "C-23", "C-24"].forEach((n, i) => decal("pg_plate" + n, plateTex(n), 0.5, 0.2, -4.9 + i * 3.25, 3.0, 7.19, Math.PI));
+    decal("pg_plate12", plateTex("C-12"), 0.5, 0.2, -4.3, 3.55, 2.81, 0); decal("pg_plate14", plateTex("C-14"), 0.5, 0.2, 4.3, 3.55, 2.81, 0);
+    const yl = new THREE.Mesh(new THREE.PlaneGeometry(13, 0.09), lam("pg_yline", () => ({ color: "#e8c23a" }))); yl.rotation.x = -Math.PI / 2; yl.position.set(0, 0.007, 3.15); yl.receiveShadow = true; R.add(yl);
+    for (const [x, z, ry] of [[-3.0, 2.81, 0], [3.0, 2.81, 0], [-1.8, 7.19, Math.PI], [1.4, 7.19, Math.PI]] as const) {
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: "#ffe7a8" })); lamp.position.set(x, 3.0, z + (ry ? -0.08 : 0.08)); lamp.layers.set(NOINK); R.add(lamp);
+    }
+    this.counter = decal("pg_countA", signTex("pg_countAT", [["DAYS WITHOUT", 40], ["AN ESCAPE", 40], ["2431", 96]]), 1.0, 0.62, 1.95, 3.8, 7.19, Math.PI);
     this.count0 = signTex("pg_count0T", [["DAYS WITHOUT", 40], ["AN ESCAPE", 40], ["0", 110]]);
     this.countA = (this.counter.material as THREE.MeshLambertMaterial).map!;
     // sky set clouds around the flock's path
@@ -258,15 +291,33 @@ export class PWorld {
       }
     };
     const PX = -0.3, PZ = 0.6; // the prisoner's spot
+    /** the rest of the block: inmates in the neighbouring and opposite cells */
+    const inmates = (expr: Expr, laughing: boolean, react = false) => {
+      INMATES.forEach((m, i) => {
+        const bob = laughing ? Math.sin(t * 20 + i) * 3 : 0;
+        person("inm" + i, m.o, m.x, m.z, react && i % 2 ? "shock" : expr, { seed: 20 + i, tilt: bob, headTilt: laughing ? (i % 2 ? 7 : -7) : 0, wave: laughing && i % 2 === 0 ? q(0.5 + 0.5 * Math.sin(t * 9 + i), 4) : undefined });
+        if (laughing) {
+          const u = ((t - at("laugh")) * 1.3 + i * 0.37) % 1, k = (i + Math.floor((t - at("laugh")) * 1.3 + i * 0.37)) % 3;
+          fxc.push({ key: "ha" + k, cw: 512, ch: 256, draw: (p) => haTex(p, k), at: [m.x + 0.25 * Math.sin(i * 2.1), 2.05 + 0.5 * u, m.z - 0.3], w: 0.75, h: 0.375 });
+        }
+      });
+      if (laughing) for (const [gx, gz, j] of [[0.55, 4.3, 0], [1.55, 4.5, 1]] as const) {
+        const u = ((t - at("laugh")) * 1.5 + j * 0.5) % 1;
+        fxc.push({ key: "ha" + ((j + Math.floor((t - at("laugh")) * 1.5)) % 3), cw: 512, ch: 256, draw: (p) => haTex(p, (j + Math.floor((t - at("laugh")) * 1.5)) % 3), at: [gx, 2.15 + 0.45 * u, gz - 0.2], w: 0.6, h: 0.3 });
+      }
+    };
 
+    if (id === 1 || id === 4) inmates("neutral", false);
     if (id === 1) {
       const wv = ease(t, at("single") - 0.5, at("single"));
       person("pris", PRISONER, PX, PZ, t > at("single") - 0.4 ? "grin" : "smile", { seed: 3, wave: wv > 0.02 ? wv : undefined });
-      if (wv > 0.5) crumb(PX + 0.34, 1.6 + 0.03 * Math.sin(t * 3), PZ + 0.05, 0.12, false);
-      burst(PX + 0.34, 1.6, PZ + 0.04, at("breadcrumb1"), 0.5);
+      const hx = PX + right.x * 0.34, hz = PZ + right.z * 0.34;
+      if (wv > 0.5) crumb(hx, 1.6 + 0.03 * Math.sin(t * 3), hz, 0.12, false);
+      burst(hx, 1.6, hz, at("breadcrumb1"), 0.5);
     } else if (id === 2) {
       const k = walkK(t), p = lerp3(P_WALK[0], P_WALK[1], k), walking = k > 0 && k < 1;
-      person("pris", PRISONER, p[0], p[2], "smile", { seed: 3, side: true, mode: walking ? "march" : "stand", phase: walking ? (t * 1.7) % 1 : 0, mirror: true });
+      const dx = walking || k === 0 ? P_WALK[1][0] - P_WALK[0][0] : -1, dz = walking || k === 0 ? P_WALK[1][2] - P_WALK[0][2] : -0.25;
+      person("pris", PRISONER, p[0], p[2], t > at("leaves") - 0.4 ? "grin" : "smile", { seed: 3, side: true, mode: walking ? "march" : "stand", phase: walking ? (t * 1.7) % 1 : 0, mirror: dx * right.x + dz * right.z < 0 });
       if (t > at("leaves")) crumb(0.7, 1.556, -2.62);
       burst(0.7, 1.62, -2.6, at("leaves"), 0.35);
     } else if (id === 3 || id === 4) {
@@ -279,8 +330,9 @@ export class PWorld {
       if (id === 5) person("pris", PRISONER, PX, PZ, "smile_closed", { seed: 3 });
       const laughing = id === 6 && t > at("laugh"), bob = laughing ? Math.sin(t * 22) * 3 : 0;
       const exA: Expr = laughing ? "laugh" : t > at("lonely") || id === 6 ? "grin" : "stern";
-      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, id === 6 ? 4.6 : 4.15, exA, { seed: 5, scale: 1.12, tilt: bob, headTilt: laughing ? 6 : 0 });
-      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, id === 6 ? 4.55 : 4.0, laughing ? "laugh" : exA === "stern" ? "stern" : "grin", { seed: 6, scale: 1.1, tilt: -bob, headTilt: laughing ? -6 : 0 });
+      inmates(laughing ? "laugh" : id === 6 || t > at("lonely") ? "grin" : "smile", laughing);
+      person("guardA", GUARD_A, id === 6 ? 0.55 : 0.85, id === 6 ? 4.3 : 4.05, exA, { seed: 5, scale: 1.12, tilt: bob, headTilt: laughing ? 6 : 0 });
+      person("guardB", GUARD_B, id === 6 ? 1.55 : 1.85, id === 6 ? 4.5 : 3.75, laughing ? "laugh" : exA === "stern" ? "stern" : "grin", { seed: 6, scale: 1.1, tilt: -bob, headTilt: laughing ? -6 : 0 });
     } else if (id === 7) {
       const nod = ease(t, at("falls"), at("asleep"));
       person("guardB", GUARD_B, 3.45, 5.3, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
@@ -297,9 +349,11 @@ export class PWorld {
         this.aim(i, i < n ? [sp[0], 0.22, sp[2]] : null, hand);
       }
     } else if (id === 9) {
+      inmates("smile", false);
       const x = wardenX(t), walking = t > KW.warden - 0.6 && t < KW.cell - 0.1;
       person("warden", WARDEN, x, 3.4, "stern", { seed: 9, side: true, mode: walking ? "march" : "stand", phase: walking ? (t * 1.8) % 1 : 0 });
     } else if (id === 10) {
+      inmates(t > at("empty") ? "grin" : "neutral", false, t > at("empty"));
       const ex: Expr = t > at("empty") ? "shock" : t > at("finds") - 0.2 ? "nervous" : "stern";
       person("warden", WARDEN, 1.1, 3.25, ex, { seed: 9, blink: ex === "shock" ? false : undefined });
     } else if (id === 12) {

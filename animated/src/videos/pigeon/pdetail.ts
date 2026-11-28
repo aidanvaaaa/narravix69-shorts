@@ -149,15 +149,8 @@ export const buildBay = (root: THREE.Object3D, wall: THREE.Material, roof: THREE
   // water (unlit gradient-ish blue, fog tints it into the haze)
   const water = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), new THREE.MeshBasicMaterial({ color: "#3f6f9c" }));
   water.rotation.x = -Math.PI / 2; water.position.set(1000, -0.3, -400); root.add(water);
-  // the island: rock, grass top, cell blocks, guard towers, lighthouse
-  const rock = lam("pg_rock", () => ({ color: "#8a7a68" })), grass = lam("pg_isle", () => ({ color: "#6f8f4c" })), white = lam("pg_white", () => ({ color: "#ece6da" }));
-  const [px, py, pz] = prison;
-  b.add(new THREE.CylinderGeometry(48, 58, py + 0.3, 14).translate(px, py / 2 - 0.3, pz), rock);
-  b.add(new THREE.CylinderGeometry(46, 46, 0.6, 14).translate(px, py, pz), grass);
-  box(wall, px - 18, py, pz - 9, px + 18, py + 10, pz + 9, 2); box(roof, px - 18.5, py + 10, pz - 9.5, px + 18.5, py + 10.6, pz + 9.5, 3);
-  box(wall, px - 30, py, pz + 12, px - 16, py + 7, pz + 24, 2); box(roof, px - 30.4, py + 7, pz + 11.6, px - 15.6, py + 7.5, pz + 24.4, 3);
-  for (const [dx, dz] of [[-38, -20], [36, -18], [30, 26]]) { box(wall, px + dx - 2, py, pz + dz - 2, px + dx + 2, py + 16, pz + dz + 2, 2); box(roof, px + dx - 2.8, py + 16, pz + dz - 2.8, px + dx + 2.8, py + 17.2, pz + dz + 2.8, 3); }
-  b.add(new THREE.CylinderGeometry(1.6, 2.2, 26, 10).translate(px + 22, py + 13, pz - 2), white);
+  const white = lam("pg_white", () => ({ color: "#ece6da" }));
+  const [px, , pz] = prison;
   // the Golden Gate (spans the view behind the island)
   const red = lam("pg_gg", () => ({ color: "#c4412f" }));
   const Z = pz - 330, D = 30, X0 = px - 170, X1 = px + 190, T0 = px - 70, T1 = px + 90, TH = 112;
@@ -179,9 +172,9 @@ export const buildBay = (root: THREE.Object3D, wall: THREE.Material, roof: THREE
   // skyline behind the bridge: towers with lit windows, the pyramid, a hill with a round tower
   const fac = [0, 1, 2, 3, 4].map((k) => lam("pg_towerM" + k, () => ({ map: facadeTex(k) })));
   const rnd = (i: number, s: number) => { const v = Math.sin(i * 91.7 + s * 47.3) * 43758.5453; return v - Math.floor(v); };
-  for (let i = 0; i < 150; i++) {
-    const gx = i % 25, gz = Math.floor(i / 25), x = px - 220 + gx * 19 + rnd(i, 1) * 6, z = pz - 470 - gz * 22 - rnd(i, 2) * 6;
-    const centre = Math.exp(-(((x - px - 40) / 120) ** 2)), h = 14 + rnd(i, 3) * 40 + centre * (60 + rnd(i, 4) * 90), w = 10 + rnd(i, 5) * 7;
+  for (let i = 0; i < 520; i++) {
+    const gx = i % 40, gz = Math.floor(i / 40), x = px - 360 + gx * 18 + rnd(i, 1) * 6, z = pz - 440 - gz * 20 - rnd(i, 2) * 6;
+    const centre = Math.exp(-(((x - px - 30) / 150) ** 2)) + 0.6 * Math.exp(-(((x - px + 230) / 70) ** 2)), h = 14 + rnd(i, 3) * 45 + centre * (60 + rnd(i, 4) * 110), w = 9 + rnd(i, 5) * 8;
     box(fac[i % 5], x - w / 2, -0.3, z - w / 2, x + w / 2, h, z + w / 2, 16);
     if (h > 110 && rnd(i, 6) < 0.5) box(white, x - 1, h, z - 1, x + 1, h + 18, z + 1);
   }
