@@ -30,7 +30,7 @@ export const flockAt = (t: number): V3 => {
   const u = t - SCENES[12];
   return [FLOCK0[0] + 1.6 * u, FLOCK0[1] + 0.25 * Math.sin(u * 1.3), FLOCK0[2]];
 };
-export const PRISON: V3 = [985, 0, -75];
+export const PRISON: V3 = [975, 0, -165];
 
 // ---- cameras ----
 export type Cam = { pos: V3; look: V3; fov: number; roll?: number };
@@ -41,7 +41,7 @@ const CAMS: Key[][] = [
   // 1 hook: medium on the prisoner, punch in on "single breadcrumb"
   [K(0, { pos: [0.35, 1.3, 3.9], look: [-0.2, 1.12, 0.6], fov: 40 }), K(at("single") - 0.15, { pos: [0.0, 1.42, 2.35], look: [-0.18, 1.36, 0.6], fov: 36, roll: -0.04 }, 0.45)],
   // 2 morning routine: three-quarter view of the walk to the window
-  [K(SCENES[1], { pos: [2.3, 1.45, 1.4], look: [-0.2, 1.2, -1.1], fov: 40 }), K(6.3, { pos: [2.0, 1.4, 0.7], look: [0.35, 1.25, -1.95], fov: 40 }, 1.0)],
+  [K(SCENES[1], { pos: [2.3, 1.45, 1.4], look: [-0.2, 1.2, -1.1], fov: 40 }), K(5.3, { pos: [2.0, 1.4, 0.7], look: [0.35, 1.25, -1.95], fov: 40 }, 1.1)],
   // 3 the first pigeon: close on the window from inside
   [K(SCENES[2], { pos: [0.35, 1.5, -1.05], look: [0.65, 1.72, -2.65], fov: 32 })],
   // 4 two, then a hard cut to the wide cell full of pigeons on "forty"
@@ -50,7 +50,7 @@ const CAMS: Key[][] = [
   // 5 guards seen from inside the cell, through the bars
   [K(SCENES[4], { pos: [-0.55, 1.5, 0.9], look: [1.1, 1.5, 4.1], fov: 40 })],
   // 6 the guards laugh: close, from the corridor
-  [K(SCENES[5], { pos: [1.12, 1.42, 2.88], look: [1.12, 1.38, 4.2], fov: 46 }), K(at("laugh") - 0.1, { pos: [1.12, 1.44, 3.0], look: [1.12, 1.4, 4.2], fov: 44, roll: 0.03 }, 0.3)],
+  [K(SCENES[5], { pos: [1.12, 1.38, 2.9], look: [1.12, 1.32, 4.6], fov: 50 }), K(at("laugh") - 0.1, { pos: [1.12, 1.4, 3.0], look: [1.12, 1.34, 4.6], fov: 48, roll: 0.03 }, 0.3)],
   // 7 night: the guard on his chair nods off
   [K(SCENES[6], { pos: [2.35, 1.35, 3.0], look: [3.45, 1.05, 5.25], fov: 38 }), K(at("asleep") - 0.2, { pos: [2.75, 1.25, 3.65], look: [3.45, 1.05, 5.25], fov: 34 }, 0.8)],
   // 8 night: strings to every bird, slow orbit

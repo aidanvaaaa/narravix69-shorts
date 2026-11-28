@@ -150,8 +150,8 @@ export class PWorld {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: cm[i % 4], transparent: true, depthWrite: false, fog: true }));
       const w = 14 + hh(i, 20) * 22;
       m.position.set(940 + hh(i, 21) * 130, 30 + hh(i, 22) * 45, -150 + hh(i, 23) * 50);
-      if (i < 3) { m.position.set(992 + (i - 1) * 16, 36 + i * 4, -14); m.scale.set(8, 4, 1); } // small near ones for parallax
-      if (i >= 3) m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
+      if (i < 3) m.position.set(1010 + i * 25, 52 + i * 6, -60 - i * 10); // mid-distance ones for parallax
+      m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
     }
   }
 
@@ -255,8 +255,8 @@ export class PWorld {
       if (id === 5) person("pris", PRISONER, PX, PZ, "smile_closed", { seed: 3 });
       const laughing = id === 6 && t > at("laugh"), bob = laughing ? Math.sin(t * 22) * 3 : 0;
       const exA: Expr = laughing ? "laugh" : t > at("lonely") || id === 6 ? "grin" : "stern";
-      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, 4.15, exA, { seed: 5, tilt: bob, headTilt: laughing ? 6 : 0 });
-      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, 4.0, laughing ? "laugh" : exA === "stern" ? "neutral" : "smile", { seed: 6, tilt: -bob, headTilt: laughing ? -6 : 0 });
+      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, id === 6 ? 4.6 : 4.15, exA, { seed: 5, tilt: bob, headTilt: laughing ? 6 : 0 });
+      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, id === 6 ? 4.55 : 4.0, laughing ? "laugh" : exA === "stern" ? "neutral" : "smile", { seed: 6, tilt: -bob, headTilt: laughing ? -6 : 0 });
     } else if (id === 7) {
       const nod = ease(t, at("falls"), at("asleep"));
       person("guardB", GUARD_B, 3.45, 5.3, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
