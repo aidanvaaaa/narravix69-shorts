@@ -30,7 +30,7 @@ export const flockAt = (t: number): V3 => {
   const u = t - SCENES[12];
   return [FLOCK0[0] + 1.6 * u, FLOCK0[1] + 0.25 * Math.sin(u * 1.3), FLOCK0[2]];
 };
-export const PRISON: V3 = [975, 0, -165];
+export const PRISON: V3 = [990, 6, -200];
 
 // ---- cameras ----
 export type Cam = { pos: V3; look: V3; fov: number; roll?: number };

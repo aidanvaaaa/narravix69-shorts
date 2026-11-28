@@ -9,6 +9,7 @@ import { stoneHD, planksHD, cloudHD, grassHD, roofHD, CLOUD_GOLD, ctex } from ".
 import { TONE, CHAR } from "../bridge/shade";
 import { LIGHTS, LOOK } from "../bridge/lights";
 import { NOINK } from "../bridge/ink";
+import { wallTex, floorTex, rustTex, vineTex, tallyTex, webTex, puddleTex, signTex, buildBay } from "./pdetail";
 import { PRISONER, GUARD_A, GUARD_B, WARDEN, drawPigeon, drawCrumb, drawZ, drawGlow, drawSky } from "./ptoon";
 import {
   FPS, KW, V3, Light, SHOTS, shotAt, camAt, at, ease, smooth, clamp01, lerp, lerp3, wardenX, P_WALK, walkK, CELL_SPOTS, landT, WINDOW,
@@ -23,7 +24,7 @@ const PRESETS: Record<Light, Preset> = {
   night: { ...LIGHTS.day, lit: [0.5, 0.6, 0.95], shade: [0.14, 0.16, 0.3], lift: [0.03, 0.04, 0.09], term: 0.2,
     charTint: [0.6, 0.68, 1.0], charShade: 0.84, sideTint: [0.8, 0.85, 1.0], fog: "#16224a", fogNear: 40, fogFar: 300, sunDir: [0.32, 0.8, -0.5],
     skyC: ["#2d4f86", "#22406f", "#1a3360", "#142850", "#0f1d3d"], skyE: [0, 3, 8, 16, 40] },
-  golden: { ...LIGHTS.golden, actorShadow: false, sunDir: [-0.42, 0.3, 0.86], skyC: LOOK.golden.sky.c, skyE: LOOK.golden.sky.e, fogNear: 60, fogFar: 420 },
+  golden: { ...LIGHTS.golden, actorShadow: false, sunDir: [-0.42, 0.3, 0.86], skyC: LOOK.golden.sky.c, skyE: LOOK.golden.sky.e, fogNear: 180, fogFar: 1400 },
 };
 const srgb = (hex: string, out: THREE.Color) => out.set(hex).convertLinearToSRGB();
 
@@ -49,6 +50,7 @@ export class PWorld {
   private strings: THREE.Mesh[] = []; private strMat = new THREE.MeshBasicMaterial({ color: "#cfc8b8" });
   private glow: THREE.Sprite;
   private clouds: THREE.Mesh[] = [];
+  private counter!: THREE.Mesh; private count0!: THREE.Texture; private countA!: THREE.Texture;
   private v = new THREE.Vector3();
 
   constructor() {
@@ -73,20 +75,20 @@ export class PWorld {
     R.add(this.hemi, this.sun, this.sun.target);
 
     // ---- materials ----
-    const wall = lam("pg_wall", () => ({ map: stoneHD("pg_wallStone", ["#b9b0a4", "#aea596", "#c3baae", "#a69d90"], "#857c72") }));
-    const wallDark = lam("pg_wall2", () => ({ map: stoneHD("pg_wallStone2", ["#9c948c", "#918a82", "#a69e95", "#8a837b"], "#6e6760") }));
-    const floor = lam("pg_floor", () => ({ map: stoneHD("pg_floorStone", ["#8f8a86", "#86817c", "#99938e", "#7f7a75"], "#615c58") }));
+    const wall = lam("pg_wallD", () => ({ map: wallTex("pg_wallT", ["#a9a093", "#9e9586", "#b3aa9d", "#968d80"], "#6f675d", 0.35) }));
+    const wallDark = lam("pg_wallD2", () => ({ map: wallTex("pg_wallT2", ["#8c847b", "#817a72", "#968e85", "#7a736b"], "#5a544e", 0.45) }));
+    const floor = lam("pg_floorD", () => ({ map: floorTex() }));
     const wood = lam("pg_wood", () => ({ map: planksHD() }));
-    const iron = lam("pg_iron", () => ({ color: "#4a4f5a" }));
+    const iron = lam("pg_rust", () => ({ map: rustTex() }));
     const mattress = lam("pg_mattress", () => ({ map: ctex("pg_ticking", 256, 256, (g) => { g.fillStyle = "#ece6d8"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#6f86b8"; for (let x = 8; x < 256; x += 32) g.fillRect(x, 0, 9, 256); g.fillStyle = "#9fb0d4"; for (let x = 22; x < 256; x += 32) g.fillRect(x, 0, 3, 256); }) }));
     const pillow = lam("pg_pillow", () => ({ color: "#f3efe6" }));
     const red = lam("pg_blanket", () => ({ color: "#c0353a" }));
     const desk = lam("pg_desk", () => ({ color: "#8a5a3c" }));
     const b = new Batch();
-    const box = (m: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, tile = 1.2) => b.add(boxGeo(V(x0, y0, z0), V(x1, y1, z1), tile), m);
+    const box = (m: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, tile = 2.0) => b.add(boxGeo(V(x0, y0, z0), V(x1, y1, z1), tile), m);
 
     // ---- cell (x -2..2, z -2.5..2.5) + corridor (z 2.5..7.2) ----
-    box(floor, -6.5, -0.2, -3.2, 6.5, 0, 7.6, 1.0);
+    box(floor, -6.5, -0.2, -3.2, 6.5, 0, 7.6, 2.0);
     // back wall with the window hole (x 0.25..1.05, y 1.55..2.35)
     box(wall, -2.3, 0, -2.9, 0.25, 4.2, -2.5); box(wall, 1.05, 0, -2.9, 2.3, 4.2, -2.5);
     box(wall, 0.25, 0, -2.9, 1.05, 1.55, -2.5); box(wall, 0.25, 2.35, -2.9, 1.05, 4.2, -2.5);
@@ -111,16 +113,20 @@ export class PWorld {
     box(iron, 1.6, 0.08, 2.58, 2.0, 0.16, 2.66, 0); box(iron, 1.6, 2.2, 2.58, 2.0, 2.28, 2.66, 0);
     // guard desk + chair in the corridor
     box(desk, 4.1, 0, 5.4, 5.1, 0.78, 6.1, 0); box(desk, 3.15, 0, 5.15, 3.75, 0.46, 5.7, 0); box(desk, 3.15, 0.46, 5.62, 3.75, 1.15, 5.72, 0);
-    // ---- the prison far below the sky set ----
-    const grass = lam("pg_grass", () => ({ map: grassHD() }));
+    // rusty pipes along the corridor's far wall, a bucket and a hanging bulb in the cell
+    for (const y of [3.55, 3.75]) b.add(new THREE.CylinderGeometry(0.06, 0.06, 13, 10).rotateZ(Math.PI / 2).translate(0, y, 7.1), iron);
+    b.add(new THREE.CylinderGeometry(0.06, 0.06, 3.6, 10).translate(-3.2, 1.8, 7.1), iron);
+    b.add(new THREE.CylinderGeometry(0.17, 0.13, 0.32, 14).translate(1.6, 0.16, -2.1), iron);
+    b.add(new THREE.CylinderGeometry(0.008, 0.008, 1.2, 5).translate(0.2, 3.6, 0.2), iron);
+    // wall chains with shackles next to the bunk
+    for (const cz of [-0.25, 0.25]) for (let k = 0; k < 9; k++) {
+      const tg = new THREE.TorusGeometry(0.035, 0.011, 6, 12); if (k % 2) tg.rotateY(Math.PI / 2);
+      b.add(tg.translate(-1.97, 1.75 - k * 0.062, cz), iron);
+    }
     const roof = lam("pg_roof", () => ({ map: roofHD("#5a5f6e", true) }));
-    box(grass, 700, -0.5, -400, 1300, -0.25, 300, 6);
-    const [px, , pz] = PRISON;
-    box(wall, px - 16, -0.25, pz - 10, px + 16, 9, pz + 10, 2); box(roof, px - 16.5, 9, pz - 10.5, px + 16.5, 9.6, pz + 10.5, 3);
-    for (const [dx, dz] of [[-22, -16], [22, -16], [-22, 16], [22, 16]]) { box(wall, px + dx - 2, -0.25, pz + dz - 2, px + dx + 2, 15, pz + dz + 2, 2); box(roof, px + dx - 2.6, 15, pz + dz - 2.6, px + dx + 2.6, 16, pz + dz + 2.6, 3); }
-    box(wallDark, px - 22, -0.25, pz - 16.6, px + 22, 6, pz - 15.4, 2); box(wallDark, px - 22, -0.25, pz + 15.4, px + 22, 6, pz + 16.6, 2);
-    box(wallDark, px - 22.6, -0.25, pz - 16, px - 21.4, 6, pz + 16, 2); box(wallDark, px + 21.4, -0.25, pz - 16, px + 22.6, 6, pz + 16, 2);
     b.build(R);
+    buildBay(R, wall, roof, PRISON);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), new THREE.MeshBasicMaterial({ color: "#fff1b8" })); bulb.position.set(0.2, 2.95, 0.2); bulb.layers.set(NOINK); R.add(bulb);
 
     // the blanket (vanishes string by string in shot 8)
     this.blanket = new THREE.Mesh(boxGeo(V(-0.5, 0, -1), V(0.5, 0.07, 1), 0), red);
@@ -144,6 +150,23 @@ export class PWorld {
     // strings (thin unlit tubes, re-aimed every frame)
     const sg = new THREE.CylinderGeometry(1, 1, 1, 5).translate(0, 0.5, 0);
     for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(sg, this.strMat); m.visible = false; m.layers.set(NOINK); this.strings.push(m); R.add(m); }
+    // ---- decals: vines, tally marks, cobwebs, puddles, signs ----
+    const decal = (key: string, map: THREE.Texture, w: number, h: number, x: number, y: number, z: number, ry: number, flat = false) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), lam(key, () => ({ map, alphaTest: 0.4, side: THREE.DoubleSide })));
+      m.position.set(x, y, z); if (flat) m.rotation.set(-Math.PI / 2, 0, ry); else m.rotation.y = ry; m.receiveShadow = true; R.add(m); return m;
+    };
+    const V0 = vineTex(1), V1 = vineTex(2), V2 = vineTex(3);
+    decal("pg_v1", V0, 1.6, 3.2, -1.2, 2.6, -2.49, 0); decal("pg_v2", V1, 1.2, 2.4, 0.65, 3.0, -2.49, 0); decal("pg_v3", V2, 1.4, 2.8, 1.5, 2.8, -2.49, 0);
+    decal("pg_v4", V1, 1.6, 3.2, -1.99, 2.6, 1.4, Math.PI / 2); decal("pg_v5", V2, 1.6, 3.2, 1.99, 2.6, -1.2, -Math.PI / 2); decal("pg_v6", V0, 1.4, 2.8, 1.99, 2.8, 1.6, -Math.PI / 2);
+    decal("pg_v7", V0, 2.0, 2.2, -0.6, 3.1, 2.49, 0); decal("pg_v8", V2, 2.0, 2.2, 1.4, 3.1, 2.49, 0);
+    decal("pg_v9", V1, 2.0, 4.0, -4.5, 2.2, 7.19, Math.PI); decal("pg_v10", V0, 2.0, 4.0, 3.2, 2.2, 7.19, Math.PI); decal("pg_v11", V2, 1.6, 3.2, -2.6, 2.6, 2.81, 0); decal("pg_v12", V1, 1.6, 3.2, 3.4, 2.6, 2.81, 0);
+    decal("pg_tallyM", tallyTex(), 1.1, 1.1, -1.99, 1.25, -1.0, Math.PI / 2);
+    for (const [x, z, ry] of [[-1.98, -2.48, 0], [1.98, -2.48, -Math.PI / 2]] as const) decal("pg_webM", webTex(), 0.7, 0.7, x + (ry ? -0.0 : 0.35), 3.2, z + (ry ? 0.35 : 0), ry);
+    for (const [x, z, s] of [[0.9, 0.9, 0.9], [-0.9, 1.9, 0.6], [2.6, 4.8, 1.1], [-2.0, 5.6, 0.8]] as const) decal("pg_puddleM", puddleTex(), s, s * 0.7, x, 0.006, z, 0.4, true);
+    decal("pg_noPets", signTex("pg_noPetsT", [["NO", 70], ["PETS", 70]], true), 1.0, 0.62, 0.35, 2.25, 7.19, Math.PI);
+    this.counter = decal("pg_countA", signTex("pg_countAT", [["DAYS WITHOUT", 40], ["AN ESCAPE", 40], ["2431", 96]]), 1.0, 0.62, 1.95, 2.55, 7.19, Math.PI);
+    this.count0 = signTex("pg_count0T", [["DAYS WITHOUT", 40], ["AN ESCAPE", 40], ["0", 110]]);
+    this.countA = (this.counter.material as THREE.MeshLambertMaterial).map!;
     // sky set clouds around the flock's path
     const cm = [0, 1, 2, 3].map((k) => cloudHD(k + 10, CLOUD_GOLD));
     for (let i = 0; i < 16; i++) {
@@ -195,18 +218,19 @@ export class PWorld {
     this.blanket.visible = id <= 8;
     const bk = id === 8 ? 1 - 0.85 * stringsK(t) : 1;
     this.blanket.scale.set(0.98 * Math.max(0.15, bk), 1, 0.92 * Math.max(0.15, bk));
+    (this.counter.material as THREE.MeshLambertMaterial).map = id >= 10 && t > at("empty") ? this.count0 : this.countA;
     this.door.rotation.y = id === 10 ? -1.25 * ease(t, KW.finds - 0.45, KW.finds + 0.25) : 0;
 
     // ---- cast ----
     const cards: Card[] = [], fxc: FxCard[] = [];
-    const person = (name: string, o: Outfit, x: number, z: number, expr: Expr, opts: { mode?: "stand" | "march" | "sit" | "stroll"; side?: boolean; mirror?: boolean; phase?: number; wave?: number; tilt?: number; headTilt?: number; y?: number; seed: number; blink?: boolean; look?: number; roll?: number }) => {
+    const person = (name: string, o: Outfit, x: number, z: number, expr: Expr, opts: { mode?: "stand" | "march" | "sit" | "stroll"; side?: boolean; mirror?: boolean; phase?: number; wave?: number; tilt?: number; headTilt?: number; y?: number; seed: number; blink?: boolean; look?: number; roll?: number; scale?: number }) => {
       const mirror = !!opts.mirror, light = light2D(mirror), bl = opts.blink ?? blinkAt(t, opts.seed);
       const ph = q(opts.phase ?? 0, 24), wv = opts.wave === undefined ? undefined : q(opts.wave, 8);
       const key = `${name}|${expr}|${opts.mode ?? "stand"}|${opts.side ? 1 : 0}|${ph}|${wv}|${q(opts.tilt ?? 0, 2)}|${q(opts.headTilt ?? 0, 2)}|${bl ? 1 : 0}|${light.toFixed(2)}|${opts.look ?? 0}`;
       const draw = opts.side
         ? (p: Pen) => bodySide(p, o, { phase: ph, expr, mode: opts.mode === "march" ? "march" : "stand", blink: bl, light, seed: opts.seed })
         : (p: Pen) => bodyFront(p, o, { phase: ph, expr, mode: opts.mode ?? "stand", blink: bl, light, seed: opts.seed, wave: wv, tilt: opts.tilt, headTilt: opts.headTilt, look: opts.look, facing: 0 });
-      cards.push({ key, draw, at: [x, opts.y ?? 0, z], mirror, roll: opts.roll, big: true });
+      cards.push({ key, draw, at: [x, opts.y ?? 0, z], mirror, roll: opts.roll, big: true, scale: opts.scale });
       if ((opts.y ?? 0) < 0.05) fxc.push({ key: "blob|contact|#6a6470", cw: 128, ch: 128, draw: (p) => fxContact(p, "#6a6470"), at: [x, 0.012, z], w: 0.9, h: 0.6, flat: true });
     };
     const pigeon = (i: number, x: number, y: number, z: number, mirror: boolean, flap: number, peck: number, fly: boolean, tired = false, scale = 0.7) => {
@@ -255,8 +279,8 @@ export class PWorld {
       if (id === 5) person("pris", PRISONER, PX, PZ, "smile_closed", { seed: 3 });
       const laughing = id === 6 && t > at("laugh"), bob = laughing ? Math.sin(t * 22) * 3 : 0;
       const exA: Expr = laughing ? "laugh" : t > at("lonely") || id === 6 ? "grin" : "stern";
-      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, id === 6 ? 4.6 : 4.15, exA, { seed: 5, tilt: bob, headTilt: laughing ? 6 : 0 });
-      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, id === 6 ? 4.55 : 4.0, laughing ? "laugh" : exA === "stern" ? "neutral" : "smile", { seed: 6, tilt: -bob, headTilt: laughing ? -6 : 0 });
+      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, id === 6 ? 4.6 : 4.15, exA, { seed: 5, scale: 1.12, tilt: bob, headTilt: laughing ? 6 : 0 });
+      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, id === 6 ? 4.55 : 4.0, laughing ? "laugh" : exA === "stern" ? "stern" : "grin", { seed: 6, scale: 1.1, tilt: -bob, headTilt: laughing ? -6 : 0 });
     } else if (id === 7) {
       const nod = ease(t, at("falls"), at("asleep"));
       person("guardB", GUARD_B, 3.45, 5.3, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
@@ -290,6 +314,11 @@ export class PWorld {
         pigeon(i, p[0], p[1], p[2], false, flapAt(hh(i, 30), 2.4 + hh(i, 31)), 0, true, true, 0.9);
         this.aim(i, [p[0] + 0.05, p[1] + 0.12, p[2]], grip);
       }
+    }
+    if (id <= 6 || (id >= 10 && id <= 12)) for (let i = 0; i < 26; i++) {
+      const u = (t * 0.05 + hh(i, 40)) % 1;
+      fxc.push({ key: "mote", cw: 64, ch: 64, draw: (p) => { const g = p.g, gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,244,214,0.9)"); gr.addColorStop(1, "rgba(255,244,214,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); },
+        at: [0.2 + hh(i, 41) * 1.1 + 0.15 * Math.sin(t * 0.7 + i), 0.4 + ((hh(i, 42) + u * 0.4) % 1) * 2.0, -2.3 + hh(i, 43) * 1.8], w: 0.025, h: 0.025, soft: true });
     }
     if (id !== 8 && id !== 13) for (const m of this.strings) m.visible = false;
 

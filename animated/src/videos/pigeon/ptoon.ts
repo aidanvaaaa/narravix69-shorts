@@ -4,8 +4,8 @@ import { Pen, INK, SKIN, OFFICER, Outfit, mix } from "../bridge/toon";
 type P2 = [number, number];
 
 export const PRISONER: Outfit = { jacket: "#f08a2c", pants: "#e27a24", boots: "#5a3b2a", hat: "hair", hair: "#3a2a20", skin: SKIN, buttons: "#fbe7c8" };
-export const GUARD_A: Outfit = { jacket: "#3a5a92", pants: "#26385e", boots: INK, hat: "cap", cap: "#22345a", belt: "#1b1b1f", buttons: "#e8c45a", skin: "#f5c9a0" };
-export const GUARD_B: Outfit = { jacket: "#3a5a92", pants: "#26385e", boots: INK, hat: "cap", cap: "#22345a", belt: "#1b1b1f", buttons: "#e8c45a", skin: "#ecd0b6", build: "stout" };
+export const GUARD_A: Outfit = { jacket: "#2c303b", pants: "#1c1f27", boots: INK, hat: "cap", cap: "#15171d", belt: "#0e0e10", buttons: "#c9ccd2", skin: "#e8bf9c", moustache: "#1a1412", build: "stout" };
+export const GUARD_B: Outfit = { jacket: "#2c303b", pants: "#1c1f27", boots: INK, hat: "cap", cap: "#15171d", belt: "#0e0e10", buttons: "#c9ccd2", skin: "#d6a47e", build: "stout" };
 export const WARDEN: Outfit = { ...OFFICER, jacket: "#4c6b45", pants: "#33482f", sash: "#c9a94a", sword: false, moustache: "#2a1a14", skin: "#f5c9a0" };
 
 const BODY = "#9aa3b5", BODY_LO = "#7e889c", WING = "#7c8598", NECK_G = "#4fa58a", NECK_P = "#8a5aa6", BEAK = "#f0a43a", FEET = "#e48a8a";
