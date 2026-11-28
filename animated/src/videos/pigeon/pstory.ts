@@ -25,7 +25,7 @@ export const SHOTS = SCENES.map((s, i) => ({
 export const shotAt = (f: number) => SHOTS.find((s) => f >= s.a && f < s.b) ?? SHOTS[SHOTS.length - 1];
 
 // ---- the flock in the sky (shot 13) ----
-export const FLOCK0: V3 = [992, 47, -18];
+export const FLOCK0: V3 = [992, 120, -18];
 export const flockAt = (t: number): V3 => {
   const u = t - SCENES[12];
   return [FLOCK0[0] + 1.6 * u, FLOCK0[1] + 0.25 * Math.sin(u * 1.3), FLOCK0[2]];

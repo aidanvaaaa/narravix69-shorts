@@ -78,7 +78,7 @@ export class PWorld {
     const floor = lam("pg_floor", () => ({ map: stoneHD("pg_floorStone", ["#8f8a86", "#86817c", "#99938e", "#7f7a75"], "#615c58") }));
     const wood = lam("pg_wood", () => ({ map: planksHD() }));
     const iron = lam("pg_iron", () => ({ color: "#4a4f5a" }));
-    const mattress = lam("pg_mattress", () => ({ color: "#d9d3c4" }));
+    const mattress = lam("pg_mattress", () => ({ map: ctex("pg_ticking", 256, 256, (g) => { g.fillStyle = "#ece6d8"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#6f86b8"; for (let x = 8; x < 256; x += 32) g.fillRect(x, 0, 9, 256); g.fillStyle = "#9fb0d4"; for (let x = 22; x < 256; x += 32) g.fillRect(x, 0, 3, 256); }) }));
     const pillow = lam("pg_pillow", () => ({ color: "#f3efe6" }));
     const red = lam("pg_blanket", () => ({ color: "#c0353a" }));
     const desk = lam("pg_desk", () => ({ color: "#8a5a3c" }));
@@ -149,8 +149,8 @@ export class PWorld {
     for (let i = 0; i < 16; i++) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: cm[i % 4], transparent: true, depthWrite: false, fog: true }));
       const w = 14 + hh(i, 20) * 22;
-      m.position.set(940 + hh(i, 21) * 130, 30 + hh(i, 22) * 45, -150 + hh(i, 23) * 50);
-      if (i < 3) m.position.set(1010 + i * 25, 52 + i * 6, -60 - i * 10); // mid-distance ones for parallax
+      m.position.set(940 + hh(i, 21) * 130, 70 + hh(i, 22) * 45, -150 + hh(i, 23) * 50);
+      if (i < 3) m.position.set(1010 + i * 25, 100 + i * 8, -60 - i * 10); // mid-distance ones for parallax
       m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
     }
   }
