@@ -40,7 +40,7 @@ jobs:
         run: node scripts/stills.mjs ${{ inputs.comp }} out/still_ ${{ inputs.frames }}
       - name: Video
         if: ${{ inputs.mode == 'video' }}
-        run: npx remotion render src/index.ts ${{ inputs.comp }} out/video.mp4 --gl=swiftshader --codec h264 --crf 18 --concurrency=2 --timeout=600000
+        run: npx remotion render src/index.ts ${{ inputs.comp }} out/video.mp4 --gl=swangle --codec h264 --crf 18 --concurrency=2 --timeout=600000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
