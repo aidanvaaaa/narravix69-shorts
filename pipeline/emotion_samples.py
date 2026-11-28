@@ -154,11 +154,12 @@ def story():
     torch.set_num_threads(4)
     model = ChatterboxTTS.from_pretrained(device="cpu")
     sr = model.sr
-    nat = pathlib.Path("assets/narrator_ref.ogg")  # a clip of the chosen British narrator, so every video sounds the same
+    nat = pathlib.Path(os.environ.get("NARRATOR_REF", "assets/narrator_ref.ogg"))  # fixed narrator clip, so every video sounds the same
+    ex, cfg = float(os.environ.get("NARRATOR_EX", "0.65")), float(os.environ.get("NARRATOR_CFG", "0.4"))
     text = os.environ["STORY_TEXT"]
     parts, pauses = [], []
     for c in _chunks(text, 230):
-        parts.append(_trim(model.generate(c, audio_prompt_path=str(nat), exaggeration=0.65, cfg_weight=0.4), sr))
+        parts.append(_trim(model.generate(c, audio_prompt_path=str(nat), exaggeration=ex, cfg_weight=cfg), sr))
         pauses.append(0.42 if c.rstrip().endswith("...") else 0.3)
     full = _join(parts, sr, pauses[:-1])
     wavp = OUT / "story.wav"
@@ -226,5 +227,14 @@ def voices():
         print("made", label, flush=True)
 
 
+def story_daniel():
+    """Story narration in the chosen calm British voice (Daniel)."""
+    import os
+    os.environ["NARRATOR_REF"] = "assets/narrator_daniel.ogg"
+    os.environ["NARRATOR_EX"] = "0.55"
+    os.environ["NARRATOR_CFG"] = "0.45"
+    story()
+
+
 if __name__ == "__main__":
-    {"refs": refs, "make": make, "british": british, "story": story, "voices": voices}[sys.argv[1]]()
+    {"refs": refs, "make": make, "british": british, "story": story, "voices": voices, "story_daniel": story_daniel}[sys.argv[1]]()
