@@ -166,6 +166,16 @@ def story():
     ta.save(str(wavp), full, sr)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wavp), "-af", POLISH, "-b:a", "192k", str(OUT / "story.mp3")], check=True)
     print("made story", flush=True)
+    try:  # exact word timings, so every scene can be synced to the narration
+        import json
+        from faster_whisper import WhisperModel
+        wm = WhisperModel("base.en", device="cpu", compute_type="int8")
+        segs, _ = wm.transcribe(str(OUT / "story.mp3"), word_timestamps=True, initial_prompt=text)
+        words = [[w.word.strip(), round(w.start, 3), round(w.end, 3)] for sg in segs for w in sg.words]
+        (OUT / "story_words.json").write_text(json.dumps(words))
+        print("aligned", len(words), "words", flush=True)
+    except Exception as e:
+        print("alignment failed:", e, flush=True)
 
 
 VOICE_TEXT = ("This prisoner has a plan, and it starts with a single breadcrumb. Every morning, he saves one crumb from "
