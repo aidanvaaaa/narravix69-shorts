@@ -167,5 +167,64 @@ def story():
     print("made story", flush=True)
 
 
+VOICE_TEXT = ("This prisoner has a plan, and it starts with a single breadcrumb. Every morning, he saves one crumb from "
+              "breakfast and leaves it on his window. The next day, a pigeon shows up. Then two. Then forty.")
+VOICE_REFS = [  # (label, Kokoro voice used only as a synthetic starting point, exaggeration, cfg)
+    ("01_current_narrator", None, 0.65, 0.4),
+    ("02_british_lewis_deep", "bm_lewis", 0.6, 0.4),
+    ("03_british_daniel_calm", "bm_daniel", 0.55, 0.45),
+    ("04_british_fable_storyteller", "bm_fable", 0.65, 0.4),
+    ("05_american_michael_warm", "am_michael", 0.6, 0.4),
+    ("06_american_adam_deep", "am_adam", 0.6, 0.4),
+    ("07_american_eric_documentary", "am_eric", 0.55, 0.45),
+    ("08_american_onyx_gravel", "am_onyx", 0.6, 0.4),
+    ("09_chatterbox_builtin", "builtin", 0.6, 0.4),
+]
+
+
+def voices():
+    """Same Pigeon Escape passage in several storytelling voices (all synthetic, owned by nobody)."""
+    import wave
+    import torch
+    import torchaudio as ta
+    from kokoro import KPipeline
+    from chatterbox.tts import ChatterboxTTS
+    OUT.mkdir(parents=True, exist_ok=True)
+    pipes = {}
+    for label, vid, _, _ in VOICE_REFS:
+        if vid in (None, "builtin"):
+            continue
+        p = pipes.setdefault(vid[0], KPipeline(lang_code=vid[0]))
+        a = np.concatenate([np.asarray(r.audio.detach().cpu().numpy() if hasattr(r.audio, "detach") else r.audio)
+                            for r in p(REF_TEXT, voice=vid, speed=0.95)])
+        with wave.open(str(OUT / f"ref_{vid}.wav"), "wb") as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(24000)
+            w.writeframes((np.clip(a, -1, 1) * 32767).astype(np.int16).tobytes())
+    torch.set_num_threads(4)
+    model = ChatterboxTTS.from_pretrained(device="cpu")
+    sr = model.sr
+    ref_line = ("You know, most people never think about it. It's just there, every night, quietly waiting. "
+                "But tonight... something is different.")
+    for label, vid, ex, cfg in VOICE_REFS:
+        kw = {}
+        if vid is None:
+            kw["audio_prompt_path"] = "assets/narrator_ref.ogg"
+        elif vid != "builtin":
+            nat = OUT / f"nat_{vid}.wav"  # let Chatterbox re-voice it first so it flows naturally (same recipe as the current narrator)
+            w = model.generate(ref_line, audio_prompt_path=str(OUT / f"ref_{vid}.wav"), exaggeration=0.45, cfg_weight=0.5)
+            ta.save(str(nat), _trim(w, sr), sr)
+            kw["audio_prompt_path"] = str(nat)
+        parts, pauses = [], []
+        for c in _chunks(VOICE_TEXT, 230):
+            parts.append(_trim(model.generate(c, exaggeration=ex, cfg_weight=cfg, **kw), sr))
+            pauses.append(0.3)
+        full = _join(parts, sr, pauses[:-1])
+        wavp = OUT / f"{label}.wav"
+        ta.save(str(wavp), full, sr)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wavp), "-af", POLISH, "-b:a", "160k", str(OUT / f"{label}.mp3")], check=True)
+        wavp.unlink()
+        print("made", label, flush=True)
+
+
 if __name__ == "__main__":
-    {"refs": refs, "make": make, "british": british, "story": story}[sys.argv[1]]()
+    {"refs": refs, "make": make, "british": british, "story": story, "voices": voices}[sys.argv[1]]()
