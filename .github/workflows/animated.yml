@@ -9,6 +9,9 @@ on:
       mode:
         description: "stills = test frames, video = full render"
         default: "stills"
+      stilljobs:
+        description: "optional JSON list of still jobs (overrides comp/frames)"
+        default: ""
       frames:
         description: "frames for stills mode"
         default: "60,200,360,500,600,760,900,1060,1180,1350,1500,1680,1800,1960"
@@ -37,6 +40,8 @@ jobs:
           ls $GITHUB_WORKSPACE/animated/public/bridge/kenney | head
       - name: Stills
         if: ${{ inputs.mode == 'stills' }}
+        env:
+          JOBS: ${{ inputs.stilljobs }}
         run: node scripts/stills.mjs ${{ inputs.comp }} out/still_ ${{ inputs.frames }}
       - name: Video
         if: ${{ inputs.mode == 'video' }}
