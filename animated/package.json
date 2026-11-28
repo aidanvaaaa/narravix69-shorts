@@ -1,0 +1,27 @@
+{
+  "name": "narravix69-animated",
+  "private": true,
+  "description": "3D cartoon story shorts (three.js in Remotion), based on the MIT claude-animated-shorts skill",
+  "scripts": {
+    "stills": "node scripts/stills.mjs",
+    "render": "remotion render src/index.ts BridgeShort out/video.mp4 --gl=swiftshader --codec h264 --crf 18"
+  },
+  "dependencies": {
+    "@react-three/fiber": "latest",
+    "@react-three/postprocessing": "latest",
+    "@remotion/bundler": "latest",
+    "@remotion/cli": "latest",
+    "@remotion/renderer": "latest",
+    "@remotion/three": "latest",
+    "postprocessing": "latest",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "latest",
+    "three": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/three": "latest",
+    "typescript": "^5.6.0"
+  }
+}
