@@ -331,14 +331,14 @@ export class PWorld {
       const laughing = id === 6 && t > at("laugh"), bob = laughing ? Math.sin(t * 22) * 3 : 0;
       const exA: Expr = laughing ? "laugh" : t > at("lonely") || id === 6 ? "grin" : "stern";
       inmates(laughing ? "laugh" : id === 6 || t > at("lonely") ? "grin" : "smile", laughing);
-      person("guardA", GUARD_A, id === 6 ? 0.55 : 0.85, id === 6 ? 4.3 : 4.05, exA, { seed: 5, scale: 1.12, tilt: bob, headTilt: laughing ? 6 : 0 });
-      person("guardB", GUARD_B, id === 6 ? 1.55 : 1.85, id === 6 ? 4.5 : 3.75, laughing ? "laugh" : exA === "stern" ? "stern" : "grin", { seed: 6, scale: 1.1, tilt: -bob, headTilt: laughing ? -6 : 0 });
+      person("guardA", GUARD_A, id === 6 ? 0.55 : 1.9, id === 6 ? 4.3 : 3.35, exA, { seed: 5, scale: 1.12, tilt: bob, headTilt: laughing ? 6 : 0 });
+      person("guardB", GUARD_B, id === 6 ? 1.55 : 1.1, id === 6 ? 4.5 : 3.45, laughing ? "laugh" : exA === "stern" ? "stern" : "grin", { seed: 6, scale: 1.1, tilt: -bob, headTilt: laughing ? -6 : 0 });
     } else if (id === 7) {
       const nod = ease(t, at("falls"), at("asleep"));
-      person("guardB", GUARD_B, 3.45, 5.3, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
+      person("guardB", GUARD_B, 3.45, 5.05, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
       if (t > at("asleep")) for (let k = 0; k < 3; k++) {
         const u = ((t - at("asleep")) * 0.6 + k / 3) % 1;
-        fxc.push({ key: "z", cw: 200, ch: 200, draw: drawZ, at: [3.6 + 0.35 * u, 1.75 + 0.7 * u, 5.2], w: 0.12 + 0.12 * u, h: 0.12 + 0.12 * u, soft: false });
+        fxc.push({ key: "z", cw: 200, ch: 200, draw: drawZ, at: [3.6 + 0.35 * u, 1.75 + 0.7 * u, 4.95], w: 0.12 + 0.12 * u, h: 0.12 + 0.12 * u, soft: false });
       }
     } else if (id === 8) {
       const sk = stringsK(t), n = Math.round(sk * 40), hand: V3 = [PX + 0.05, 1.0, PZ - 0.3];
