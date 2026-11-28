@@ -50,7 +50,7 @@ const CAMS: Key[][] = [
   // 5 guards seen from inside the cell, through the bars
   [K(SCENES[4], { pos: [-0.55, 1.5, 0.9], look: [1.1, 1.5, 4.1], fov: 40 })],
   // 6 the guards laugh: close, from the corridor
-  [K(SCENES[5], { pos: [1.12, 1.38, 2.9], look: [1.12, 1.32, 4.6], fov: 50 }), K(at("laugh") - 0.1, { pos: [1.12, 1.4, 3.0], look: [1.12, 1.34, 4.6], fov: 48, roll: 0.03 }, 0.3)],
+  [K(SCENES[5], { pos: [1.12, 1.55, 2.9], look: [1.12, 1.55, 4.6], fov: 52 }), K(at("laugh") - 0.1, { pos: [1.12, 1.57, 3.0], look: [1.12, 1.57, 4.6], fov: 50, roll: 0.03 }, 0.3)],
   // 7 night: the guard on his chair nods off
   [K(SCENES[6], { pos: [2.35, 1.35, 3.0], look: [3.45, 1.05, 5.25], fov: 38 }), K(at("asleep") - 0.2, { pos: [2.75, 1.25, 3.65], look: [3.45, 1.05, 5.25], fov: 34 }, 0.8)],
   // 8 night: strings to every bird, slow orbit
@@ -58,7 +58,7 @@ const CAMS: Key[][] = [
   // 9 thirty days later: the warden marches down the corridor (camera pans with him)
   [K(SCENES[8], (t) => { const x = wardenX(t); return { pos: [x + 0.4, 1.5, 6.6], look: [x + 0.15, 1.3, 4.0], fov: 40 }; })],
   // 10 finds it empty: through the bars at the warden, punch in on "empty"
-  [K(SCENES[9], { pos: [0.75, 1.55, 0.55], look: [1.1, 1.6, 3.2], fov: 38 }), K(at("empty") - 0.08, { pos: [0.95, 1.68, 1.75], look: [1.1, 1.7, 3.2], fov: 30, roll: -0.04 }, 0.25)],
+  [K(SCENES[9], { pos: [0.75, 1.55, 0.55], look: [1.1, 1.6, 3.2], fov: 38 }), K(at("empty") - 0.08, { pos: [0.9, 1.8, 1.25], look: [1.25, 1.95, 3.2], fov: 38, roll: -0.04 }, 0.25)],
   // 11 the bed is made, the blanket is gone
   [K(SCENES[10], { pos: [-0.35, 1.45, 0.75], look: [-1.5, 0.6, -1.25], fov: 40 }), K(at("blanket") - 0.1, { pos: [-0.75, 1.25, 0.1], look: [-1.5, 0.58, -1.2], fov: 36 }, 0.9)],
   // 12 one last breadcrumb on the pillow
