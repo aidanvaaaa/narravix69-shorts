@@ -5,7 +5,7 @@ import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 const [comp, prefix, frames] = process.argv.slice(2);
 fs.mkdirSync(path.dirname(prefix), { recursive: true });
-const chromiumOptions = { gl: "swiftshader" };
+const chromiumOptions = { gl: process.env.REMOTION_GL || "swangle" };
 const serveUrl = await bundle({ entryPoint: path.resolve("src/index.ts"), publicDir: path.resolve("public") });
 const composition = await selectComposition({ serveUrl, id: comp, chromiumOptions });
 const onBrowserLog = (l) => { if (l.type === "error" || l.type === "warning") console.log(`[${l.type}]`, l.text.slice(0, 300)); };
