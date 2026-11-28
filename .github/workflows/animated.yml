@@ -1,0 +1,49 @@
+name: Animated 3D short
+
+on:
+  workflow_dispatch:
+    inputs:
+      comp:
+        description: "composition id"
+        default: "BridgeShort"
+      mode:
+        description: "stills = test frames, video = full render"
+        default: "stills"
+      frames:
+        description: "frames for stills mode"
+        default: "60,200,360,500,600,760,900,1060,1180,1350,1500,1680,1800,1960"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    defaults:
+      run:
+        working-directory: animated
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Install
+        run: npm install --no-audit --no-fund --loglevel=error
+      - name: Kenney CC0 models (optional; the scene still renders without them)
+        continue-on-error: true
+        run: |
+          mkdir -p public/bridge/kenney /tmp/k && cd /tmp/k
+          curl -fsSL -o nature.zip "https://kenney.nl/media/pages/assets/nature-kit/9e7e9f8a3d-1677698970/kenney_nature-kit.zip" || true
+          if [ -s nature.zip ]; then unzip -q -o nature.zip && find . -name "*.glb" -exec cp {} $GITHUB_WORKSPACE/animated/public/bridge/kenney/ \; ; fi
+          ls $GITHUB_WORKSPACE/animated/public/bridge/kenney | head
+      - name: Stills
+        if: ${{ inputs.mode == 'stills' }}
+        run: node scripts/stills.mjs ${{ inputs.comp }} out/still_ ${{ inputs.frames }}
+      - name: Video
+        if: ${{ inputs.mode == 'video' }}
+        run: npx remotion render src/index.ts ${{ inputs.comp }} out/video.mp4 --gl=swiftshader --codec h264 --crf 18 --concurrency=2 --timeout=600000
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: animated-${{ inputs.mode }}
+          path: animated/out/
+          retention-days: 7
