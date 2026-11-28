@@ -51,8 +51,8 @@ const Stamp: React.FC<{ f: number }> = ({ f }) => {
   const s = u < 0.12 ? 1.6 - 5 * u : 1, o = u > 1.7 ? 1 - (u - 1.7) / 0.3 : 1;
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-      <div style={{ transform: `rotate(-6deg) scale(${s})`, opacity: o, marginTop: -560, padding: "18px 40px", border: "10px solid #f4efe2", borderRadius: 18,
-        color: "#f4efe2", fontFamily: "Arial Black, Arial, sans-serif", fontWeight: 900, fontSize: 104, letterSpacing: 6, textShadow: "0 6px 0 #241726", boxShadow: "0 6px 0 #241726" }}>
+      <div style={{ transform: `rotate(-6deg) scale(${s})`, opacity: o, marginTop: -560, padding: "18px 40px", border: "10px solid #d8322f", borderRadius: 18, background: "rgba(255,248,236,0.88)",
+        color: "#d8322f", fontFamily: "Arial Black, Arial, sans-serif", fontWeight: 900, fontSize: 104, letterSpacing: 6, boxShadow: "0 8px 0 rgba(36,23,38,0.55)" }}>
         30 DAYS LATER
       </div>
     </AbsoluteFill>

@@ -20,7 +20,7 @@ type Preset = typeof LIGHTS.day & { sunDir: C3; skyC: string[]; skyE: number[] }
 const PRESETS: Record<Light, Preset> = {
   morn: { ...LIGHTS.day, lit: [1.45, 1.33, 1.12], shade: [0.5, 0.47, 0.6], lift: [0.05, 0.05, 0.09], term: 0.2,
     charTint: [1.0, 0.95, 0.9], fog: "#b8d0ec", fogNear: 40, fogFar: 300, sunDir: [0.32, 0.8, -0.5], skyC: LOOK.day.sky.c, skyE: LOOK.day.sky.e },
-  night: { ...LIGHTS.day, lit: [0.62, 0.74, 1.12], shade: [0.2, 0.23, 0.4], lift: [0.03, 0.04, 0.09], term: 0.2,
+  night: { ...LIGHTS.day, lit: [0.5, 0.6, 0.95], shade: [0.14, 0.16, 0.3], lift: [0.03, 0.04, 0.09], term: 0.2,
     charTint: [0.6, 0.68, 1.0], charShade: 0.84, sideTint: [0.8, 0.85, 1.0], fog: "#16224a", fogNear: 40, fogFar: 300, sunDir: [0.32, 0.8, -0.5],
     skyC: ["#2d4f86", "#22406f", "#1a3360", "#142850", "#0f1d3d"], skyE: [0, 3, 8, 16, 40] },
   golden: { ...LIGHTS.golden, actorShadow: false, sunDir: [-0.42, 0.3, 0.86], skyC: LOOK.golden.sky.c, skyE: LOOK.golden.sky.e, fogNear: 60, fogFar: 420 },
@@ -46,7 +46,7 @@ export class PWorld {
   private fog = new THREE.Fog("#b8d0ec", 40, 300);
   private winSky: THREE.MeshBasicMaterial; private winDay: THREE.Texture; private winNight: THREE.Texture;
   private blanket: THREE.Mesh; private door = new THREE.Group();
-  private strings: THREE.Mesh[] = []; private strMat = new THREE.MeshBasicMaterial({ color: "#f4efe2" });
+  private strings: THREE.Mesh[] = []; private strMat = new THREE.MeshBasicMaterial({ color: "#cfc8b8" });
   private glow: THREE.Sprite;
   private clouds: THREE.Mesh[] = [];
   private v = new THREE.Vector3();
@@ -149,9 +149,9 @@ export class PWorld {
     for (let i = 0; i < 16; i++) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: cm[i % 4], transparent: true, depthWrite: false, fog: true }));
       const w = 14 + hh(i, 20) * 22;
-      m.position.set(960 + hh(i, 21) * 90, 22 + hh(i, 22) * 40, -70 + hh(i, 23) * 60 - (i % 3 === 0 ? 0 : 30));
-      if (i < 4) m.position.set(1000 + (i - 1.5) * 18, 40 + i * 3, -2 - i * 4); // a few near ones for parallax
-      m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
+      m.position.set(940 + hh(i, 21) * 130, 30 + hh(i, 22) * 45, -150 + hh(i, 23) * 50);
+      if (i < 3) { m.position.set(992 + (i - 1) * 16, 36 + i * 4, -14); m.scale.set(8, 4, 1); } // small near ones for parallax
+      if (i >= 3) m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
     }
   }
 
@@ -238,8 +238,8 @@ export class PWorld {
     if (id === 1) {
       const wv = ease(t, at("single") - 0.5, at("single"));
       person("pris", PRISONER, PX, PZ, t > at("single") - 0.4 ? "grin" : "smile", { seed: 3, wave: wv > 0.02 ? wv : undefined });
-      if (wv > 0.5) crumb(PX + 0.36, 1.85 + 0.08 * Math.sin(t * 3), PZ + 0.05, 0.13, false);
-      burst(PX + 0.36, 1.85, PZ + 0.04, at("breadcrumb1"), 0.6);
+      if (wv > 0.5) crumb(PX + 0.34, 1.6 + 0.03 * Math.sin(t * 3), PZ + 0.05, 0.12, false);
+      burst(PX + 0.34, 1.6, PZ + 0.04, at("breadcrumb1"), 0.5);
     } else if (id === 2) {
       const k = walkK(t), p = lerp3(P_WALK[0], P_WALK[1], k), walking = k > 0 && k < 1;
       person("pris", PRISONER, p[0], p[2], "smile", { seed: 3, side: true, mode: walking ? "march" : "stand", phase: walking ? (t * 1.7) % 1 : 0, mirror: true });
@@ -255,8 +255,8 @@ export class PWorld {
       if (id === 5) person("pris", PRISONER, PX, PZ, "smile_closed", { seed: 3 });
       const laughing = id === 6 && t > at("laugh"), bob = laughing ? Math.sin(t * 22) * 3 : 0;
       const exA: Expr = laughing ? "laugh" : t > at("lonely") || id === 6 ? "grin" : "stern";
-      person("guardA", GUARD_A, 0.65, 4.15, exA, { seed: 5, tilt: bob, headTilt: laughing ? 6 : 0 });
-      person("guardB", GUARD_B, 1.6, 4.0, laughing ? "laugh" : exA === "stern" ? "neutral" : "smile", { seed: 6, tilt: -bob, headTilt: laughing ? -6 : 0 });
+      person("guardA", GUARD_A, id === 6 ? 0.84 : 0.65, 4.15, exA, { seed: 5, tilt: bob, headTilt: laughing ? 6 : 0 });
+      person("guardB", GUARD_B, id === 6 ? 1.42 : 1.6, 4.0, laughing ? "laugh" : exA === "stern" ? "neutral" : "smile", { seed: 6, tilt: -bob, headTilt: laughing ? -6 : 0 });
     } else if (id === 7) {
       const nod = ease(t, at("falls"), at("asleep"));
       person("guardB", GUARD_B, 3.45, 5.3, nod > 0.6 ? "whistle" : "neutral", { seed: 6, mode: "sit", y: 0.0, blink: nod > 0.6 || (nod > 0.2 && Math.sin(t * 20) > 0), headTilt: q(14 * nod, 1), tilt: q(4 * nod, 1) });
@@ -327,7 +327,7 @@ export class PWorld {
     const A = V(...a), B = V(...b), d = B.clone().sub(A), len = d.length();
     m.visible = true; m.position.copy(A);
     m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize());
-    m.scale.set(0.006, len, 0.006);
+    m.scale.set(0.0032, len, 0.0032);
   }
 }
 export { SHOTS };
